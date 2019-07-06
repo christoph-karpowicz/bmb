@@ -1,2 +1,2 @@
-server: src/server.c
-	cc src/server.c -o app -pthread -lnsl
+app: src/app.c
+	cc src/app.c src/server.c src/s_thread.c src/queue.c src/queue_node.c -o app -pthread -lnsl
