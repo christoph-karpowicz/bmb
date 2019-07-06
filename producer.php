@@ -42,7 +42,7 @@ while ($out = socket_read($socket, 2048)) {
     echo $out;
 }
 
-echo "Closing socket...";
+echo "\nClosing socket...";
 socket_close($socket);
 echo "OK.\n\n";
 ?>
