@@ -2,8 +2,5 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct Queue Queue;
+#include "queue.h"
 
-struct Queue {
-    // Node* root;
-};

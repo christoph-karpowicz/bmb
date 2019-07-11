@@ -13,7 +13,43 @@ void error(const char *msg)
     exit(1);
 }
 
-void Server_init(Server* s) {
+bool Server_accept(Server *s) {
+    // Accept call creates a new socket for the incoming connection
+    s->addr_size = sizeof s->serverStorage;
+    s->newSocket = accept(s->socket, (struct sockaddr *) &s->serverStorage, &s->addr_size);
+    if (s->newSocket < 0) {
+        s->error("ERROR on accept");
+        return false;
+    }
+    return true;
+}
+
+bool Server_bind(Server *s) {
+    
+    //Bind the address struct to the socket 
+    if (bind(s->socket, (struct sockaddr *) &s->serverAddr, sizeof(s->serverAddr)) < 0) {
+        s->error("ERROR on binding");
+        return false;
+    }
+    return true;
+    
+}
+
+bool Server_create_socket(Server *s) {
+
+    s->socket = socket(PF_INET, SOCK_STREAM, 0);
+    if (s->socket < 0) {
+        s->error("ERROR opening socket");
+        return false;
+    }
+    return true;
+
+}
+
+void Server_init(Server *s) {
+
+    // Assign methods.
+    s->error = error;
 
     s->client_message[CLIENT_MESSAGE_SIZE] = "\0";
     s->buffer[BUFFER_SIZE] = "\0";
@@ -31,26 +67,4 @@ void Server_init(Server* s) {
     //Set all bits of the padding field to 0 
     memset(s->serverAddr.sin_zero, '\0', sizeof s->serverAddr.sin_zero);
 
-}
-
-bool Server_create_socket(Server* s) {
-
-    s->socket = socket(PF_INET, SOCK_STREAM, 0);
-    if (s->socket < 0) {
-        error("ERROR opening socket");
-        return false;
-    }
-    return true;
-
-}
-
-bool Server_bind(Server* s) {
-    
-    //Bind the address struct to the socket 
-    if (bind(s->socket, (struct sockaddr *) &s->serverAddr, sizeof(s->serverAddr)) < 0) {
-        error("ERROR on binding");
-        return false;
-    }
-    return true;
-    
 }

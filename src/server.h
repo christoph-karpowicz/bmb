@@ -11,26 +11,33 @@
 #define CLIENT_MESSAGE_SIZE 2000
 
 typedef struct Server {
-    char* client_message[CLIENT_MESSAGE_SIZE];
-    char* buffer[BUFFER_SIZE];
+
+    // Properties.
+    char *client_message[CLIENT_MESSAGE_SIZE];
+    char *buffer[BUFFER_SIZE];
     int socket;
     int newSocket;
     struct sockaddr_in serverAddr;
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;
+    
+    // Methods.
+    void (*error)(const char *msg);
 
 } Server;
 
-void Server_init(Server* s);
+bool Server_accept(Server *s);
 
-bool Server_create_socket(Server* s);
+bool Server_bind(Server *s);
 
-bool Server_bind(Server* s);
+bool Server_create_socket(Server *s);
+
+void Server_init(Server *s);
 
 typedef struct socket_thread_arguments {
-    int* socket;
-    char* client_message;
-    char* buffer;
+    int *socket;
+    char *client_message;
+    char *buffer;
 } socket_thread_args;
 
 void error(const char *msg);
