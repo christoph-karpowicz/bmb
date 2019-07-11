@@ -12,7 +12,7 @@ typedef struct node Node;
 struct node 
 {
     
-    struct node_methods *mth;
+    const struct node_methods *mth;
 
     char *message;
     Node *next;
@@ -46,17 +46,8 @@ struct node_methods
     void (*setNext)(Node *this, Node *nxt);
     void (*destruct)(Node *this);
     
-} _Node = 
-{
+}; 
 
-    .construct = Node_construct,
-    .clearMessage = Node_clear_message,
-    .getMessage = Node_get_message,
-    .setMessage = Node_set_message,
-    .getNext = Node_get_next,
-    .setNext = Node_set_next,
-    .destruct = Node_destruct
-    
-};
+extern const struct node_methods _Node;
 
 #endif

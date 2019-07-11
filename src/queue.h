@@ -12,9 +12,10 @@
 typedef struct queue 
 {
 
-    struct queue_methods *mth;
+    const struct queue_methods *mth;
 
     Node* root;
+    Node* tail;
     
 } Queue;
 
@@ -22,9 +23,23 @@ Queue *Queue_new();
 
 void Queue_construct(Queue *this);
 
+void Queue_add(Queue *this, Node *rt);
+
+void Queue_clear(Queue *this);
+
+Node *Queue_get(Queue *this, int index);
+
 Node *Queue_get_root(Queue *this);
 
-void Queue_set_root(Queue *this, Node *rt);
+Node *Queue_get_next_tail(Queue *this);
+
+bool Queue_is_empty(Queue *this);
+
+Node *Queue_peek(Queue *this);
+
+Node *Queue_poll(Queue *this);
+
+int Queue_size(Queue *this);
 
 void Queue_destruct(Queue *this);
 
@@ -32,16 +47,19 @@ struct queue_methods
 {
 
     void (*construct)(Queue *this);
+    void (*add)(Queue *this, Node *rt);
+    void (*clear)(Queue *this);
+    Node *(*get)(Queue *this, int index);
+    Node *(*getNextTail)(Queue *this);
     Node *(*getRoot)(Queue *this);
-    void (*setRoot)(Queue *this, Node *rt);
+    bool (*isEmpty)(Queue *this);
+    Node *(*peek)(Queue *this);
+    Node *(*poll)(Queue *this);
+    int (*size)(Queue *this);
     void (*destruct)(Queue *this);
 
-} queue =
-{
-    .construct = Queue_construct,
-    .getRoot = Queue_get_root,
-    .setRoot = Queue_set_root,
-    .destruct = Queue_destruct
-};
+}; 
+
+extern const struct queue_methods _Queue;
 
 #endif

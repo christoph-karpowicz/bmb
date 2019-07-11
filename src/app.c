@@ -10,6 +10,8 @@
 
 #include "server.h"
 #include "s_thread.h"
+#include "queue.h"
+#include "queue_node.h"
 
 int main() {
 

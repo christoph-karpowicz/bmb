@@ -4,6 +4,19 @@
 
 #include "queue_node.h"
 
+const struct node_methods _Node = 
+{
+
+    .construct = Node_construct,
+    .clearMessage = Node_clear_message,
+    .getMessage = Node_get_message,
+    .setMessage = Node_set_message,
+    .getNext = Node_get_next,
+    .setNext = Node_set_next,
+    .destruct = Node_destruct
+    
+};
+
 void Node_construct(Node *this)
 {
     printf("construct\n");
