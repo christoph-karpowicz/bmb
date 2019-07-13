@@ -4,9 +4,12 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "server.h"
 #include "s_thread.h"
+#include "queue.h"
+#include "queue_node.h"
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -23,6 +26,8 @@ void* socketThread(void *args)
     client_msg = arguments->client_message;
     buff = arguments->buffer;
 
+    Queue *q = arguments->queue;
+
     // Read client message.
     // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
     recv(newSocket, client_msg, CLIENT_MESSAGE_SIZE, 0);
@@ -35,6 +40,12 @@ void* socketThread(void *args)
     strcat(message, client_msg);
     strcat(message, "\n");
     strcpy(buff, message);
+
+    printf("test1 -- %ld\n", strlen(client_msg));
+    Node *newNode = Node_new();
+    _Node.setMessage(newNode, client_msg, strlen(client_msg));
+    _Queue.add(q, newNode);
+
     free(message);
 
     pthread_mutex_unlock(&lock);

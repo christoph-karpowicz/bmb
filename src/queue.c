@@ -9,6 +9,7 @@ const struct queue_methods _Queue =
     .construct = Queue_construct,
     .add = Queue_add,
     .clear = Queue_clear,
+    .displayAll = Queue_display_all,
     .get = Queue_get,
     .getNextTail = Queue_get_next_tail,
     .getRoot = Queue_get_root,
@@ -29,6 +30,8 @@ Queue *Queue_new()
 
 void Queue_construct(Queue *this)
 {
+    this->root = NULL;
+    this->tail = NULL;
     printf("construct quee\n");
 }
 
@@ -45,6 +48,8 @@ void Queue_add(Queue *this, Node *rt)
         this->tail = rt;
     }
     this->root = rt;
+
+    printf("========================%s\n", _Node.getMessage(rt));
     
 }
 
@@ -74,6 +79,22 @@ void Queue_clear(Queue *this)
     }
 
     free(asArray);
+
+}
+
+void Queue_display_all(Queue *this)
+{
+
+    if (_Queue.isEmpty(this)) return;
+    
+    Node *el = this->root;
+    int i = 1;
+    do  
+    {
+        printf("----------------------\nMessage %d:\n%s\n\n", i, _Node.getMessage(el));
+        el = _Node.getNext(el);
+        i++;
+    } while (el != NULL);
 
 }
 

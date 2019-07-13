@@ -38,11 +38,15 @@ int main() {
         args.socket = &server.newSocket;
         args.client_message = server.client_message;
         args.buffer = server.buffer;
+        args.queue = server.queue;
 
         //for each client request creates a thread and assign the client request to it to process
         //so the main thread can entertain next request
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
             error("ERROR Failed to create thread");
+
+        _Queue.displayAll(server.queue); 
+        printf("req %d\n", *server.requestCounter);
 
         if (i >= 50)
         {

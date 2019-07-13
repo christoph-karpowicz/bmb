@@ -27,6 +27,8 @@ void Queue_add(Queue *this, Node *rt);
 
 void Queue_clear(Queue *this);
 
+void Queue_display_all(Queue *this);
+
 Node *Queue_get(Queue *this, int index);
 
 Node *Queue_get_root(Queue *this);
@@ -49,6 +51,7 @@ struct queue_methods
     void (*construct)(Queue *this);
     void (*add)(Queue *this, Node *rt);
     void (*clear)(Queue *this);
+    void (*displayAll)(Queue *this);
     Node *(*get)(Queue *this, int index);
     Node *(*getNextTail)(Queue *this);
     Node *(*getRoot)(Queue *this);

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "server.h"
+#include "queue.h"
 
 void error(const char *msg)
 {
@@ -21,6 +22,7 @@ bool Server_accept(Server *s) {
         s->error("ERROR on accept");
         return false;
     }
+    ++*s->requestCounter;
     return true;
 }
 
@@ -66,5 +68,12 @@ void Server_init(Server *s) {
 
     //Set all bits of the padding field to 0 
     memset(s->serverAddr.sin_zero, '\0', sizeof s->serverAddr.sin_zero);
+
+    // Create queue.
+    s->queue = Queue_new();
+
+    // Start request counter.
+    s->requestCounter = (int *) malloc(sizeof(int));
+    *s->requestCounter = 0;
 
 }

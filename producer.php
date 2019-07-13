@@ -28,9 +28,11 @@ if ($result === false) {
     echo "OK.\n";
 }
 
+$date = date('d-m-Y h:i:s');
+
 $in = "HEAD / HTTP/1.1\r\n";
 $in .= "Host: www.example.com\r\n";
-$in .= "Connection: Close\r\n\r\n";
+$in .= "Time: $date\r\n\r\n";
 $out = '';
 
 echo "Sending HTTP HEAD request...";

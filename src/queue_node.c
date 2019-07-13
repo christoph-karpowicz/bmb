@@ -19,7 +19,9 @@ const struct node_methods _Node =
 
 void Node_construct(Node *this)
 {
-    printf("construct\n");
+    this->message = NULL;
+    this->next = NULL;
+    printf("construct node\n");
 }
 
 Node *Node_new()
@@ -32,8 +34,12 @@ Node *Node_new()
 
 void Node_clear_message(Node *this) 
 {
+    printf("clear: %p\n", this->message);
     if (this->message != NULL)
+    {
         free(this->message);
+        this->message = NULL;
+    }
 }
 
 char *Node_get_message(Node *this) 
@@ -44,7 +50,7 @@ char *Node_get_message(Node *this)
 void Node_set_message(Node *this, char *ms, int msSize)
 {
     this->mth->clearMessage(this);
-    this->message = (char *) malloc(sizeof(char) * msSize);
+    this->message = (char *) malloc(sizeof(char) * (msSize + 1));
     strcpy(this->message, ms);
 }
 
