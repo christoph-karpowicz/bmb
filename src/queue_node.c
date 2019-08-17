@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-
 #include "queue_node.h"
 
 const struct node_methods _Node = 
@@ -42,7 +38,7 @@ void Node_clear_message(Node *this)
     }
 }
 
-char *Node_get_message(Node *this) 
+char *Node_get_message(const Node *this) 
 {
     return this->message;
 }
@@ -54,7 +50,7 @@ void Node_set_message(Node *this, char *ms, int msSize)
     strcpy(this->message, ms);
 }
 
-Node *Node_get_next(Node *this) 
+Node *Node_get_next(const Node *this) 
 {
     return this->next;
 }

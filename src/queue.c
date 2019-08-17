@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-
 #include "queue.h"
 
 const struct queue_methods _Queue =
@@ -49,7 +45,7 @@ void Queue_add(Queue *this, Node *rt)
     }
     this->root = rt;
 
-    printf("========================%s\n", _Node.getMessage(rt));
+    printf("========================\n%s\n", _Node.getMessage(rt));
     
 }
 
@@ -82,7 +78,7 @@ void Queue_clear(Queue *this)
 
 }
 
-void Queue_display_all(Queue *this)
+void Queue_display_all(const Queue *this)
 {
 
     if (_Queue.isEmpty(this)) return;
@@ -98,7 +94,7 @@ void Queue_display_all(Queue *this)
 
 }
 
-Node *Queue_get(Queue *this, int index)
+Node *Queue_get(const Queue *this, const int index)
 {
 
     Node *el;
@@ -113,7 +109,7 @@ Node *Queue_get(Queue *this, int index)
 
 }
 
-Node *Queue_get_next_tail(Queue *this)
+Node *Queue_get_next_tail(const Queue *this)
 {
 
     int queueSize = _Queue.size(this);
@@ -124,17 +120,17 @@ Node *Queue_get_next_tail(Queue *this)
 
 }
 
-Node *Queue_get_root(Queue *this)
+Node *Queue_get_root(const Queue *this)
 {
     return this->root;
 }
 
-bool Queue_is_empty(Queue *this)
+bool Queue_is_empty(const Queue *this)
 {
     return _Queue.size(this) > 0 ? false : true;
 }
 
-Node *Queue_peek(Queue *this)
+Node *Queue_peek(const Queue *this)
 {
     return this->tail;
 }
@@ -151,7 +147,7 @@ Node *Queue_poll(Queue *this)
 
 }
 
-int Queue_size(Queue *this)
+int Queue_size(const Queue *this)
 {
 
     if (this->root == NULL) return 0;

@@ -1,9 +1,13 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <sys/socket.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <pthread.h>
+#include <arpa/inet.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "queue.h"
@@ -32,7 +36,7 @@ typedef struct Server {
 
 bool Server_accept(Server *s);
 
-bool Server_bind(Server *s);
+bool Server_bind(const Server *s);
 
 bool Server_create_socket(Server *s);
 

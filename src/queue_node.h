@@ -2,10 +2,9 @@
 #define QUEUE_NODE_H
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <pthread.h>
 
 typedef struct node Node; 
 
@@ -25,11 +24,11 @@ void Node_construct(Node *this);
 
 void Node_clear_message(Node *this);
 
-char *Node_get_message(Node *this);
+char *Node_get_message(const Node *this);
 
 void Node_set_message(Node *this, char *ms, int msSize);
 
-Node *Node_get_next(Node *this);
+Node *Node_get_next(const Node *this);
 
 void Node_set_next(Node *this, Node *nxt);
 
@@ -40,9 +39,9 @@ struct node_methods
 
     void (*construct)(Node *this);
     void (*clearMessage)(Node *this);
-    char *(*getMessage)(Node *this);
+    char *(*getMessage)(const Node *this);
     void (*setMessage)(Node *this, char *ms, int msSize);
-    Node *(*getNext)(Node *this);
+    Node *(*getNext)(const Node *this);
     void (*setNext)(Node *this, Node *nxt);
     void (*destruct)(Node *this);
     

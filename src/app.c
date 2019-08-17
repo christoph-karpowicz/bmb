@@ -46,7 +46,7 @@ int main() {
             error("ERROR Failed to create thread");
 
         _Queue.displayAll(server.queue); 
-        printf("req %d\n", *server.requestCounter);
+        printf("Request count: %d\n", *server.requestCounter);
 
         if (i >= 50)
         {

@@ -1,16 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Producer</title>
+    <title>Producer / Consumer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="handler.js" defer></script>
 </head>
+<style>
+    .box:nth-child(2) {
+        margin-top: 30px;
+    }
+    #output {
+        border: 1px solid #000;
+        min-height: 100px;
+    }
+</style>
 <body>
 
-<div>
+<div class="box">
     <textarea id="messageInput" rows="8" cols="100"></textarea> 
+    <button onclick="produceMessage()">Produce message</button>
 </div>
-<button onclick="sendMessage()">Send message</button>
+
+<div class="box">
+    <button onclick="consumeMessage()">Consume message</button>
+    <div id="output"></div>
+</div>
+
 
 </body>
 </html>

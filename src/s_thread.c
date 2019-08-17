@@ -1,20 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <string.h>
-
-#include "server.h"
 #include "s_thread.h"
-#include "queue.h"
-#include "queue_node.h"
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void* socketThread(void *args)
 {
+
     socket_thread_args* arguments = (socket_thread_args*)args;
 
     int* newSocketPtr = arguments->socket;
@@ -26,7 +16,7 @@ void* socketThread(void *args)
     client_msg = arguments->client_message;
     buff = arguments->buffer;
 
-    Queue *q = arguments->queue;
+    Queue *queue = arguments->queue;
 
     // Read client message.
     // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
@@ -41,10 +31,17 @@ void* socketThread(void *args)
     strcat(message, "\n");
     strcpy(buff, message);
 
-    printf("test1 -- %ld\n", strlen(client_msg));
+    // printf("test1 -- %ld\n", strlen(client_msg));
+
+    // Receive and parse request.
+    Request *request = Request_parse(client_msg);    
+    printf("****req %s\n", request->message);
+
     Node *newNode = Node_new();
-    _Node.setMessage(newNode, client_msg, strlen(client_msg));
-    _Queue.add(q, newNode);
+    _Node.setMessage(newNode, request->message, strlen(request->message));
+    _Queue.add(queue, newNode);
+
+    Request_destruct(request);
 
     free(message);
 

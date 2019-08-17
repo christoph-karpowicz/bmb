@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <stdbool.h>
-
 #include "server.h"
-#include "queue.h"
 
 void error(const char *msg)
 {
@@ -26,7 +18,7 @@ bool Server_accept(Server *s) {
     return true;
 }
 
-bool Server_bind(Server *s) {
+bool Server_bind(const Server *s) {
     
     //Bind the address struct to the socket 
     if (bind(s->socket, (struct sockaddr *) &s->serverAddr, sizeof(s->serverAddr)) < 0) {
