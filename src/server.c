@@ -7,7 +7,7 @@ void error(const char *msg)
 }
 
 bool Server_accept(Server *s) {
-    // Accept call creates a new socket for the incoming connection
+    // Accept call creates a new socket for the incoming connection.
     s->addr_size = sizeof s->serverStorage;
     s->newSocket = accept(s->socket, (struct sockaddr *) &s->serverStorage, &s->addr_size);
     if (s->newSocket < 0) {
@@ -20,7 +20,7 @@ bool Server_accept(Server *s) {
 
 bool Server_bind(const Server *s) {
     
-    //Bind the address struct to the socket 
+    // Bind the address struct to the socket.
     if (bind(s->socket, (struct sockaddr *) &s->serverAddr, sizeof(s->serverAddr)) < 0) {
         s->error("ERROR on binding");
         return false;

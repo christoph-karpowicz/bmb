@@ -34,14 +34,13 @@ void* socketThread(void *args)
     // printf("test1 -- %ld\n", strlen(client_msg));
 
     // Receive and parse request.
-    Request *request = Request_parse(client_msg);    
-    printf("****req %s\n", request->message);
+    Request *req = Request_parse(client_msg);    
+    printf("****req %s\n", req->message);
 
-    Node *newNode = Node_new();
-    _Node.setMessage(newNode, request->message, strlen(request->message));
-    _Queue.add(queue, newNode);
+    Response *res = Response_new(req, queue);
+    res->handle(res);
 
-    Request_destruct(request);
+    Request_destruct(req);
 
     free(message);
 
@@ -49,7 +48,9 @@ void* socketThread(void *args)
 
     // sleep(1);
     // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
-    send(newSocket, buff, BUFFER_SIZE, 0);
+    printf("Res:\n%s\n", res->get(res));
+    send(newSocket, res->get(res), BUFFER_SIZE, 0);
+    res->destruct(res);
     printf("Exit socketThread \n");
     close(newSocket);
 

@@ -2,7 +2,6 @@
 #define QUEUE_H
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include "queue_node.h"

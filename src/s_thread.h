@@ -13,6 +13,7 @@
 #include "queue.h"
 #include "queue_node.h"
 #include "request.h"
+#include "response.h"
 
 extern pthread_mutex_t lock;
 

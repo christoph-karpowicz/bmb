@@ -75,7 +75,7 @@ char *Request_extract_message(const char *request)
     }
 
     // Free compiled regex.
-	regfree(&regex);
+    regfree(&regex);
 
     return message;
 
