@@ -1,10 +1,5 @@
 #include "response.h"
 
-#define PROTOCOL "HTTP/1.1"
-#define RESPONSE_200 "200 OK"
-#define RESPONSE_204 "204 No Content"
-#define RESPONSE_500 "500 Internal Server Error"
-
 Response *Response_new(Request *req, Queue *queue) 
 {
 
@@ -12,12 +7,13 @@ Response *Response_new(Request *req, Queue *queue)
 
     // Assign methods.
     newResponse->construct = &Response_construct;
+    newResponse->assemble = &Response_assemble;
     newResponse->get = &Response_get;
     newResponse->handle = &Response_handle;
     newResponse->destruct = &Response_destruct;
     
     newResponse->construct(newResponse, req, queue);
-    return newResponse;    
+    return newResponse;
 
 }
 
@@ -29,27 +25,42 @@ static void Response_construct(void *this, Request *req, Queue *queue)
 
 }
 
-static char *Response_get(const void *this)
+static void Response_assemble(const void *this)
 {
 
     Response *self = (Response *)this;
-    self->res_string = (char *) malloc(sizeof(char) * (
-        strlen(self->status) + 2 +
-        strlen(self->body)
-    ));
+    unsigned short int headers_length = 0;
+    for (unsigned short int i = 0; i < self->headers_count; i++) {
+        headers_length += (strlen(self->headers[i]) + 1);
+    }
+
+    printf("\nh-len: %d\n", headers_length);
+    const size_t total_size = strlen(self->status) + 2 + headers_length + strlen(self->body) + 1;
+    self->res_string = (char *) malloc(sizeof(char) * total_size);
+    
     strcpy(self->res_string, self->status);
     strcat(self->res_string, "\n");
+    for (unsigned short int i = 0; i < self->headers_count; i++) {
+        strcat(self->res_string, self->headers[i]);
+        strcat(self->res_string, "\n");
+    }
     strcat(self->res_string, "\n");
     strcat(self->res_string, self->body);
     
-    return self->res_string; 
+    // printf("\n%s\n", self->res_string);
+    
+}
+
+static char *Response_get(const void *this)
+{
+    return ((Response *)this)->res_string; 
 }
 
 static void Response_handle(const void *this)
 {
 
     Response *self = (Response *)this;
-    Request *req = self->req;
+    const Request *req = self->req;
     Queue *queue = self->queue;
 
     // Consume.
@@ -67,17 +78,22 @@ static void Response_handle(const void *this)
         _Node.setMessage(newNode, req->message, strlen(req->message));
         _Queue.add(queue, newNode);
 
-        self->status = (char *) malloc(sizeof(char) * (strlen(PROTOCOL) + strlen(RESPONSE_200) + 1));
+        self->status = (char *) malloc(sizeof(char) * (strlen(PROTOCOL) + strlen(STATUS_200) + 2));
         strcpy(self->status, PROTOCOL);
         strcat(self->status, " ");
-        strcat(self->status, RESPONSE_200);
+        strcat(self->status, STATUS_200);
 
-        printf("\n%s\n", self->status);
+        self->headers_count = 1;
+        self->headers = (char **) malloc(sizeof(char *) * self->headers_count);
+        self->headers[0] = (char *) malloc(sizeof(char) * (strlen(HEADER_ALLOW_ORIGIN) + 1));
+        strcpy(self->headers[0], HEADER_ALLOW_ORIGIN);
 
-        char *body = "Message produced.";
-        self->body = (char *) malloc(sizeof(char) * strlen(body));
+        // printf("\n%s\n", self->status);
+
+        const char *body = "Message produced.";
+        self->body = (char *) malloc(sizeof(char) * (strlen(body) + 1));
         strcpy(self->body, body);
-        printf("\n%s\n", self->body);
+        // printf("\n%s\n", self->body);
         
     }
     
@@ -86,7 +102,11 @@ static void Response_handle(const void *this)
 static void Response_destruct(void *this)
 {
     free(((Response *)this)->status);
-    // free(((Response *)this)->headers);
+    for (unsigned short int i = 0; i < ((Response *)this)->headers_count; i++) {
+        free(((Response *)this)->headers[i]);
+    }
+    free(((Response *)this)->headers);
     free(((Response *)this)->body);
+    free(((Response *)this)->res_string);
     free(this);
 }

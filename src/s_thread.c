@@ -39,6 +39,7 @@ void* socketThread(void *args)
 
     Response *res = Response_new(req, queue);
     res->handle(res);
+    res->assemble(res);
 
     Request_destruct(req);
 

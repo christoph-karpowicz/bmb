@@ -6,6 +6,7 @@ function produceMessage() {
         url: "http://localhost:8080",
         type: "POST",
         crossDomain: true,
+        dataType:"json",
         data: {
             message : messageInput 
         }
@@ -30,6 +31,7 @@ function consumeMessage() {
         url: "http://localhost:8080",
         type: "GET",
         crossDomain: true,
+        dataType:"json",
         data: {
             queue : 0 
         }

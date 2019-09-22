@@ -32,9 +32,9 @@ char *Request_extract_message(const char *request)
 
     regex_t regex;
     // Match structure for 3 subexpressions.
-    const int subexNo = 3;
+    const unsigned short int subexNo = 3;
     regmatch_t rm[subexNo];
-    int reti;
+    unsigned short int reti;
     char msgbuf[100];
     char *message;
 
@@ -51,9 +51,9 @@ char *Request_extract_message(const char *request)
     if (!reti)
     {
 
-        int start = rm[2].rm_so;
-        int finish = rm[2].rm_eo;
-        int diff = finish - start;
+        unsigned short int start = rm[2].rm_so;
+        unsigned short int finish = rm[2].rm_eo;
+        unsigned short int diff = finish - start;
 
         if (diff <= 0) return "";
         
@@ -84,10 +84,10 @@ char *Request_extract_message(const char *request)
 char *Request_extract_method(const char *request) 
 {
 
-    const int requestLength = strlen(request);
+    const unsigned short int requestLength = strlen(request);
     if (requestLength == 0) return NULL;
     
-    int i = 0;
+    unsigned short int i = 0;
     const char delimiter = ' ';
 
     while (request[i] != delimiter)
