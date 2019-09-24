@@ -11,9 +11,9 @@ typedef struct request
 
 Request *Request_parse(const char *req);
 
-char *Request_extract_message(const char *request);
+char **Request_extract_message(const char *request);
 
-char *Request_extract_method(const char *request);
+char **Request_extract_method(const char *request);
 
 void Request_destruct(Request *this);
 

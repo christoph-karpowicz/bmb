@@ -28,7 +28,7 @@ void Queue_construct(Queue *this)
 {
     this->root = NULL;
     this->tail = NULL;
-    printf("construct quee\n");
+    printf("Queue created.\n");
 }
 
 void Queue_add(Queue *this, Node *rt)
