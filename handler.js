@@ -14,8 +14,10 @@ function produceMessage() {
     .done(function(response) {
         console.log(response);
     })
-    .fail(function(error) {
+    .fail(function(error, textStatus, errorThrown) {
         console.log(error);
+        console.log(textStatus);
+        console.log(errorThrown);
     })
     .always(function() {
         console.log("complete");

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "queue.h"
 #include "queue_node.h"
@@ -14,6 +15,9 @@
 #define STATUS_204 "204 No Content"
 #define STATUS_500 "500 Internal Server Error"
 #define HEADER_ALLOW_ORIGIN "Access-Control-Allow-Origin: *"
+#define HEADER_CONNECTION_CLOSE "Connection: close"
+#define HEADER_CONTENT_TYPE "Content-type: text/html; charset=UTF-8"
+#define HEADER_HOST "Host: localhost:8080"
 
 typedef struct response 
 {

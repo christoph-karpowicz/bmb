@@ -48,10 +48,9 @@ void *socketThread(void *args)
     pthread_mutex_unlock(&lock);
 
     // sleep(1);
-    // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
     printf("Res:\n%s\n", res->get(res));
-    send(newSocket, res->get(res), BUFFER_SIZE, 0);
-    send(newSocket, "test", BUFFER_SIZE, 0);
+    // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+    send(newSocket, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
     printf("Exit socket thread.\n");
     close(newSocket);
