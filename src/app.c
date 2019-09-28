@@ -8,10 +8,10 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "server.h"
-#include "s_thread.h"
-#include "queue.h"
-#include "queue_node.h"
+#include "server/server.h"
+#include "server/s_thread.h"
+#include "queue/queue.h"
+#include "queue/queue_node.h"
 
 int main() {
 

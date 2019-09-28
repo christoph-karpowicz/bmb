@@ -10,18 +10,20 @@ Request *Request_parse(const char *req)
 
     Request *request = (Request *) malloc(sizeof(Request));
 
-    printf("Create request.\n");
-
-    char *message = Request_extract_message(req);
-    printf("message: %s\n", message);
-    request->message = message;
+    printf("Parsing request... ");
 
     char **method = Request_extract_method(req);
-    printf("method: %s\n", *method);
+    printf("extracted method: %s... ", *method);
 
     request->method = (char *) malloc(sizeof(char) * (strlen(*method) + 1));
     strcpy(request->method, *method);
     free(*method);
+
+    if (strcmp(request->method, "POST") == 0) {
+        char *message = Request_extract_message(req);
+        printf("extracted message: %s\n", message);
+        request->message = message;
+    }
 
     return request;
     
@@ -108,7 +110,9 @@ char **Request_extract_method(const char *request)
 
 void Request_destruct(Request *this)
 {
-    free(this->message);
+    if (strcmp(this->method, "POST") != 0)
+        free(this->message);
+    printf("%%%%%%%%%%%%%%%\n");
     free(this->method);
     free(this);
 }

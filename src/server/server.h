@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "queue.h"
+#include "../queue/queue.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024

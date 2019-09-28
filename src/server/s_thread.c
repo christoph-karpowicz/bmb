@@ -35,7 +35,7 @@ void *socketThread(void *args)
 
     // Receive and parse request.
     Request *req = Request_parse(client_msg);    
-    printf("****req %s\n", req->message);
+    // printf("****req %s\n", req->message);
 
     Response *res = Response_new(req, queue);
     res->handle(res);
@@ -52,6 +52,10 @@ void *socketThread(void *args)
     // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
     send(newSocket, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
+
+    // Node *node = _Queue.peek(queue);
+    // printf("\nMSG: %s\n", _Node.getMessage(node));
+    
     printf("Exit socket thread.\n");
     close(newSocket);
 

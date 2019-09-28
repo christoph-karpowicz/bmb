@@ -6,8 +6,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "queue.h"
-#include "queue_node.h"
+#include "../queue/queue.h"
+#include "../queue/queue_node.h"
 #include "request.h"
 
 #define PROTOCOL "HTTP/1.1"
@@ -31,6 +31,7 @@ typedef struct response
     char *res_string;
 
     void (*construct)(void *this, Request *req, Queue *queue);
+    void (*add_headers)(const void *this);
     void (*assemble)(const void *this);
     char *(*get)(const void *this);
     void (*handle)(const void *this);
@@ -41,6 +42,8 @@ typedef struct response
 Response *Response_new(Request *req, Queue *queue);
 
 static void Response_construct(void *this, Request *req, Queue *queue);
+
+static void Response_add_headers(const void *this);
 
 static void Response_assemble(const void *this);
 
