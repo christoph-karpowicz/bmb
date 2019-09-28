@@ -31,10 +31,11 @@ typedef struct response
     char *res_string;
 
     void (*construct)(void *this, Request *req, Queue *queue);
-    void (*add_headers)(const void *this);
     void (*assemble)(const void *this);
     char *(*get)(const void *this);
     void (*handle)(const void *this);
+    void (*setHeaders)(const void *this);
+    void (*setStatus)(const void *this, unsigned short int code);
     void (*destruct)(void *this);
     
 } Response;
@@ -43,13 +44,15 @@ Response *Response_new(Request *req, Queue *queue);
 
 static void Response_construct(void *this, Request *req, Queue *queue);
 
-static void Response_add_headers(const void *this);
-
 static void Response_assemble(const void *this);
 
 static char *Response_get(const void *this);
 
 static void Response_handle(const void *this);
+
+static void Response_set_headers(const void *this);
+
+static void Response_set_status(const void *this, unsigned short int code);
 
 static void Response_destruct(void *this);
 

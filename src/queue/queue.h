@@ -38,6 +38,8 @@ Node *Queue_peek(const Queue *this);
 
 Node *Queue_poll(Queue *this);
 
+void Queue_reset(Queue *this);
+
 int Queue_size(const Queue *this);
 
 void Queue_destruct(Queue *this);
@@ -55,6 +57,7 @@ struct queue_methods
     bool (*isEmpty)(const Queue *this);
     Node *(*peek)(const Queue *this);
     Node *(*poll)(Queue *this);
+    void (*reset)(Queue *this);
     int (*size)(const Queue *this);
     void (*destruct)(Queue *this);
 

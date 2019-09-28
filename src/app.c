@@ -44,7 +44,6 @@ int main() {
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
             error("ERROR Failed to create thread");
 
-        _Queue.displayAll(server.queue); 
         printf("Request count: %d\n", *server.requestCounter);
 
         if (i >= 50)

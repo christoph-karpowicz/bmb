@@ -110,9 +110,8 @@ char **Request_extract_method(const char *request)
 
 void Request_destruct(Request *this)
 {
-    if (strcmp(this->method, "POST") != 0)
+    if (strcmp(this->method, "POST") == 0)
         free(this->message);
-    printf("%%%%%%%%%%%%%%%\n");
     free(this->method);
     free(this);
 }

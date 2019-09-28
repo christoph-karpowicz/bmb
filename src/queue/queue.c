@@ -12,6 +12,7 @@ const struct queue_methods _Queue =
     .isEmpty = Queue_is_empty,
     .peek = Queue_peek,
     .poll = Queue_poll,
+    .reset = Queue_reset,
     .size = Queue_size,
     .destruct = Queue_destruct
 };
@@ -26,8 +27,7 @@ Queue *Queue_new()
 
 void Queue_construct(Queue *this)
 {
-    this->root = NULL;
-    this->tail = NULL;
+    _Queue.reset(this);
     printf("Queue created.\n");
 }
 
@@ -81,7 +81,11 @@ void Queue_clear(Queue *this)
 void Queue_display_all(const Queue *this)
 {
 
-    if (_Queue.isEmpty(this)) return;
+    if (_Queue.isEmpty(this)) 
+    {
+        printf("----------------------\nQueue is empty.\n----------------------\n");
+        return;
+    }
     
     Node *el = this->root;
     int i = 1;
@@ -138,12 +142,28 @@ Node *Queue_peek(const Queue *this)
 Node *Queue_poll(Queue *this)
 {
 
+    if (_Queue.isEmpty(this)) return NULL;
+
     Node *result = this->tail;
     Node *nextTail = _Queue.getNextTail(this);
-    _Node.setNext(nextTail, NULL);
-    this->tail = nextTail;
+
+    if (nextTail != NULL)
+    {
+        _Node.setNext(nextTail, NULL);
+        this->tail = nextTail;
+    }
+    else 
+        _Queue.reset(this);
     
     return result;
+
+}
+
+void Queue_reset(Queue *this)
+{
+
+    this->root = NULL;
+    this->tail = NULL;
 
 }
 

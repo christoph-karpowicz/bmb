@@ -7,10 +7,11 @@ Response *Response_new(Request *req, Queue *queue)
 
     // Assign methods.
     newResponse->construct = &Response_construct;
-    newResponse->add_headers = &Response_add_headers;
     newResponse->assemble = &Response_assemble;
     newResponse->get = &Response_get;
     newResponse->handle = &Response_handle;
+    newResponse->setHeaders = &Response_set_headers;
+    newResponse->setStatus = &Response_set_status;
     newResponse->destruct = &Response_destruct;
 
     newResponse->construct(newResponse, req, queue);
@@ -21,48 +22,9 @@ Response *Response_new(Request *req, Queue *queue)
 static void Response_construct(void *this, Request *req, Queue *queue) 
 {
 
+    printf("Response constructor called.\n");
     ((Response *)this)->req = req;
     ((Response *)this)->queue = queue;
-
-}
-
-static void Response_add_headers(const void *this)
-{
-
-    Response *self = (Response *)this;
-
-    self->headers_count = 5;
-    self->headers = (char **) malloc(sizeof(char *) * self->headers_count);
-    // Alow origin header.
-    self->headers[0] = (char *) malloc(sizeof(char) * (strlen(HEADER_ALLOW_ORIGIN) + 1));
-    strcpy(self->headers[0], HEADER_ALLOW_ORIGIN);
-    // Connection close header.
-    self->headers[1] = (char *) malloc(sizeof(char) * (strlen(HEADER_CONNECTION_CLOSE + 1)));
-    strcpy(self->headers[1], HEADER_CONNECTION_CLOSE);
-    // Content type header.
-    self->headers[2] = (char *) malloc(sizeof(char) * (strlen(HEADER_CONTENT_TYPE) + 1));
-    strcpy(self->headers[2], HEADER_CONTENT_TYPE);
-    // Host header.
-    self->headers[3] = (char *) malloc(sizeof(char) * (strlen(HEADER_HOST) + 1));
-    strcpy(self->headers[3], HEADER_HOST);
-
-    // Date header.
-    time_t now = time(&now);
-    if (now == -1) {
-        puts("The time() function failed");
-    }
-    struct tm *ptm = gmtime(&now);
-    if (ptm == NULL) {
-        puts("The gmtime() function failed");
-    }    
-    // printf("UTC time: %s", asctime(ptm));
-    char *date_head = "Date: ";
-    char *date = (char *) malloc(sizeof(char) * (strlen(date_head) + strlen(asctime(ptm)) + 1));
-    strcpy(date, date_head);
-    strcat(date, asctime(ptm));
-    self->headers[4] = (char *) malloc(sizeof(char) * (strlen(date) + 1));
-    strcpy(self->headers[4], date);
-    free(date);
 
 }
 
@@ -107,13 +69,7 @@ static void Response_handle(const void *this)
     const Request *req = self->req;
     Queue *queue = self->queue;
 
-    self->status = (char *) malloc(sizeof(char) * (strlen(PROTOCOL) + strlen(STATUS_200) + 2));
-    strcpy(self->status, PROTOCOL);
-    strcat(self->status, " ");
-    strcat(self->status, STATUS_200);
-    printf("status set... ");
-
-    self->add_headers(this);
+    self->setHeaders(this);
     printf("headers added... ");
 
     // Consume.
@@ -121,17 +77,33 @@ static void Response_handle(const void *this)
     {
 
         printf("recognized as GET... ");
-        Node *node = _Queue.peek(queue);
-        printf("\nMSG: %s\n", _Node.getMessage(node));
+
         char *json_start = "{ \"msg\": \"";
         char *json_end = "\" }";
-        size_t body_len = strlen(_Node.getMessage(node)) + strlen(json_start) + strlen(json_end) + 1;
+        char *msg;
+        
+        if (!_Queue.isEmpty(queue))
+        {
+            self->setStatus(this, 200);
+            Node *node = _Queue.poll(queue);
+            msg = (char *) malloc(sizeof(char) * strlen(_Node.getMessage(node)) + 1);
+            strcpy(msg, _Node.getMessage(node));
+            _Node.destruct(node);
+        }
+        else
+        {
+            self->setStatus(this, 404);
+            char *queue_empty_msg = "Queue is empty.";
+            msg = (char *) malloc(sizeof(char) * strlen(queue_empty_msg) + 1);
+            strcpy(msg, queue_empty_msg);
+        }
+
+        size_t body_len = strlen(msg) + strlen(json_start) + strlen(json_end) + 1;
         self->body = (char *) malloc(sizeof(char) * body_len);
         strcpy(self->body, json_start);
-        strcat(self->body, _Node.getMessage(node));
+        strcat(self->body, msg);
         strcat(self->body, json_end);
-        printf("Body: %s\n", self->body);
-        _Node.destruct(node);
+        free(msg);
 
     }
     // Produce.
@@ -139,6 +111,9 @@ static void Response_handle(const void *this)
     {
 
         printf("recognized as POST... ");
+
+        self->setStatus(this, 200);
+        
         Node *newNode = Node_new();
         _Node.setMessage(newNode, req->message, strlen(req->message));
         _Queue.add(queue, newNode);
@@ -153,6 +128,75 @@ static void Response_handle(const void *this)
     }
     printf("body added... ");
     
+}
+
+static void Response_set_status(const void *this, unsigned short int code)
+{
+
+    Response *self = (Response *)this;
+    char *status_txt;
+
+    switch(code)
+    {
+        case 200:
+            status_txt = STATUS_200;
+            break;
+        case 204:
+            status_txt = STATUS_204;
+            break;
+        case 500:
+            status_txt = STATUS_500;
+            break;
+        default:
+            status_txt = STATUS_200;
+    }
+    
+    self->status = (char *) malloc(sizeof(char) * (strlen(PROTOCOL) + strlen(status_txt) + 2));
+    strcpy(self->status, PROTOCOL);
+    strcat(self->status, " ");
+    strcat(self->status, status_txt);
+    printf("status set... ");
+   
+}
+
+static void Response_set_headers(const void *this)
+{
+
+    Response *self = (Response *)this;
+
+    self->headers_count = 5;
+    self->headers = (char **) malloc(sizeof(char *) * self->headers_count);
+    // Alow origin header.
+    self->headers[0] = (char *) malloc(sizeof(char) * (strlen(HEADER_ALLOW_ORIGIN) + 1));
+    strcpy(self->headers[0], HEADER_ALLOW_ORIGIN);
+    // Connection close header.
+    self->headers[1] = (char *) malloc(sizeof(char) * (strlen(HEADER_CONNECTION_CLOSE + 1)));
+    strcpy(self->headers[1], HEADER_CONNECTION_CLOSE);
+    // Content type header.
+    self->headers[2] = (char *) malloc(sizeof(char) * (strlen(HEADER_CONTENT_TYPE) + 1));
+    strcpy(self->headers[2], HEADER_CONTENT_TYPE);
+    // Host header.
+    self->headers[3] = (char *) malloc(sizeof(char) * (strlen(HEADER_HOST) + 1));
+    strcpy(self->headers[3], HEADER_HOST);
+
+    // Date header.
+    time_t now = time(&now);
+    if (now == -1) {
+        puts("The time() function failed");
+    }
+    struct tm *ptm = gmtime(&now);
+    if (ptm == NULL) {
+        puts("The gmtime() function failed");
+    }    
+    // printf("UTC time: %s", asctime(ptm));
+    char *date_head = "Date: ";
+    char *date = (char *) malloc(sizeof(char) * (strlen(date_head) + strlen(asctime(ptm)) + 1));
+    strcpy(date, date_head);
+    strcat(date, asctime(ptm));
+    self->headers[4] = (char *) malloc(sizeof(char) * (strlen(date) + 1));
+    strcpy(self->headers[4], date);
+    free(date);
+
 }
 
 static void Response_destruct(void *this)

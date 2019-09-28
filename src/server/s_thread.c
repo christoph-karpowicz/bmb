@@ -5,6 +5,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 void *socketThread(void *args)
 {
 
+    printf("Socket thread opened.\n");
     socket_thread_args *arguments = (socket_thread_args*)args;
 
     int *newSocketPtr = arguments->socket;
@@ -56,6 +57,7 @@ void *socketThread(void *args)
     // Node *node = _Queue.peek(queue);
     // printf("\nMSG: %s\n", _Node.getMessage(node));
     
+    _Queue.displayAll(queue); 
     printf("Exit socket thread.\n");
     close(newSocket);
 
