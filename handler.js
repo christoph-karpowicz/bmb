@@ -1,14 +1,19 @@
+const URL = "http://localhost:8080";
+
+// Producer
 function produceMessage() {
 
     const messageInput = $('#messageInput').val();
 
     $.ajax({
-        url: "http://localhost:8080",
+        url: URL,
         type: "POST",
         crossDomain: true,
         dataType:"json",
         data: {
-            message : messageInput 
+            type: "produce",
+            queue: 0,
+            message : messageInput
         }
     })
     .done(function(response) {
@@ -18,35 +23,45 @@ function produceMessage() {
         console.log(error);
         console.log(textStatus);
         console.log(errorThrown);
-    })
-    .always(function() {
-        console.log("complete");
     });
 
 }
 
+$("form#producer").submit((e) => {
+
+    e.preventDefault();
+    produceMessage();
+
+});
+
+// Consumer
 function consumeMessage() {
 
     const output = $('#output');
 
     $.ajax({
-        url: "http://localhost:8080",
+        url: URL,
         type: "GET",
         crossDomain: true,
         dataType:"json",
         data: {
-            queue : 0 
+            type: "consume",
+            queue : 0
         }
     })
     .done(function(response) {
         console.log(response);
-        $(output).html(JSON.stringify(response));
+        $(output).html(response.msg);
     })
     .fail(function(error) {
         console.log(error);
-    })
-    .always(function() {
-        console.log("complete");
-    });
-    
+    });    
+
 }
+
+$("form#consumer").submit((e) => {
+
+    e.preventDefault();
+    consumeMessage();
+
+});

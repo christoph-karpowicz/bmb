@@ -44,7 +44,7 @@ char *Request_extract_message(const char *request)
     reti = regcomp(&regex, "(message=)(.*)$", REG_EXTENDED);
     if (reti)
     { 
-        fprintf(stderr, "Could not compile regex\n"); 
+        fprintf(stderr, "Could not compile regex\n");
         exit(1); 
     }
 

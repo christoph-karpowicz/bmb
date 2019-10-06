@@ -3,29 +3,62 @@
 <head>
     <title>Producer / Consumer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <script src="handler.js" defer></script>
 </head>
-<style>
-    .box:nth-child(2) {
-        margin-top: 30px;
-    }
-    #output {
-        border: 1px solid #000;
-        min-height: 100px;
-    }
-</style>
 <body>
 
-<div class="box">
-    <textarea id="messageInput" rows="8" cols="100"></textarea> 
-    <button onclick="produceMessage()">Produce message</button>
-</div>
+    <div class="container py-2">
+        <div class="row">
+            <div class="col-8">
+                
+            </div>
+            <div class="col-4">
+                Messages in queue: <span id="msgInQueue"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
 
-<div class="box">
-    <button onclick="consumeMessage()">Consume message</button>
-    <div id="output"></div>
-</div>
+                <form id="producer">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Producer</h5>
+                            <p class="card-text">
+                                <div class="form-group">
+                                    <textarea class="form-control" id="messageInput" rows="3"></textarea>
+                                </div>
+                            </p>
+                            <a href="#" class="card-link">
+                                <button type="submit" class="btn btn-primary">Produce</button>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+                
+            </div>
+            <div class="col-sm">
 
-
+                <form id="consumer">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Consumer</h5>
+                            <p class="card-text">
+                                <div id="output"></div>
+                            </p>
+                            <a href="#" class="card-link">
+                                <button type="submit" class="btn btn-primary">Consume</button>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>

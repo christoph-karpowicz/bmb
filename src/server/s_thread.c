@@ -35,6 +35,7 @@ void *socketThread(void *args)
     // printf("test1 -- %ld\n", strlen(client_msg));
 
     // Receive and parse request.
+    printf("Req:\n%s\n", client_msg);
     Request *req = Request_parse(client_msg);    
     // printf("****req %s\n", req->message);
 
@@ -49,7 +50,7 @@ void *socketThread(void *args)
     pthread_mutex_unlock(&lock);
 
     // sleep(1);
-    printf("Res:\n%s\n", res->get(res));
+    // printf("Res:\n%s\n", res->get(res));
     // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
     send(newSocket, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
