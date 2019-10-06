@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <regex.h>
-
 #include "request.h"
 
 Request *Request_parse(const char *req) 
@@ -20,16 +15,30 @@ Request *Request_parse(const char *req)
     free(*method);
 
     if (strcmp(request->method, "POST") == 0) {
-        char *message = Request_extract_message(req);
-        printf("extracted message: %s\n", message);
-        request->message = message;
+        
+        RequestPair *messagePair = Request_extract_data(req, "message");
+        printf("extracted message: %s\n", messagePair->getValue(messagePair));
+        RequestPair *typePair = Request_extract_data(req, "type");
+        printf("extracted type: %s\n", typePair->getValue(typePair));
+        RequestPair *queuePair = Request_extract_data(req, "queue");
+        printf("extracted queue: %s\n", queuePair->getValue(queuePair));
+        
+        request->message = messagePair->getValue(messagePair);
+    }
+    else if (strcmp(request->method, "GET") == 0) {
+        
+        RequestPair *typePair = Request_extract_data(req, "type");
+        printf("extracted type: %s\n", typePair->getValue(typePair));
+        RequestPair *queuePair = Request_extract_data(req, "queue");
+        printf("extracted queue: %s\n", queuePair->getValue(queuePair));
+        
     }
 
     return request;
     
 }
 
-char *Request_extract_message(const char *request) 
+RequestPair *Request_extract_data(const char *request, const char *key) 
 {
 
     regex_t regex;
@@ -38,10 +47,24 @@ char *Request_extract_message(const char *request)
     regmatch_t rm[subexNo];
     unsigned short int reti;
     char msgbuf[100];
-    char *message = NULL;
+    char *data = NULL;
 
     // Compile regex.
-    reti = regcomp(&regex, "(message=)(.*)$", REG_EXTENDED);
+    char *regex_pattern_start = "(";
+
+    char *regex_pattern_end;
+    if (strcmp(key, "queue") == 0)
+        regex_pattern_end = "=)([0-9]*)";
+    else
+        regex_pattern_end = "=)([^&]*)";
+
+    char *regex_pattern = (char *) malloc(sizeof(char) * (strlen(regex_pattern_start) + strlen(key) + strlen(regex_pattern_end) + 1));
+    // char *regex_pattern = "(data=)(.*)(&|$)";
+    strcpy(regex_pattern, regex_pattern_start);
+    strcat(regex_pattern, key);
+    strcat(regex_pattern, regex_pattern_end);
+    reti = regcomp(&regex, regex_pattern, REG_EXTENDED);
+    free(regex_pattern);
     if (reti)
     { 
         fprintf(stderr, "Could not compile regex\n");
@@ -57,10 +80,10 @@ char *Request_extract_message(const char *request)
         unsigned short int finish = rm[2].rm_eo;
         unsigned short int diff = finish - start;
 
-        if (diff <= 0) return "";
+        if (diff <= 0) return NULL;
         
-        message = (char *) malloc(sizeof(char) * (diff + 1));
-        strncpy(message, &request[start], diff + 1);
+        data = (char *) malloc(sizeof(char) * (diff + 1));
+        strncpy(data, &request[start], diff);
 
         // printf("Match, start: %d, finish: %d\n", start, finish);
         
@@ -80,7 +103,9 @@ char *Request_extract_message(const char *request)
     // Free compiled regex.
     regfree(&regex);
 
-    return message;
+    RequestPair *reqPair = RequestPair_new(key, data);
+
+    return reqPair;
 
 }
 
