@@ -43,8 +43,8 @@ char *Node_get_message(const Node *this)
     return this->message;
 }
 
-void Node_set_message(Node *this, char *ms, int msSize)
-{
+void Node_set_message(Node *this, const char *ms, int msSize)
+{ 
     this->mth->clearMessage(this);
     this->message = (char *) malloc(sizeof(char) * (msSize + 1));
     strcpy(this->message, ms);

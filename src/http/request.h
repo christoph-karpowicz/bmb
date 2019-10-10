@@ -6,13 +6,14 @@
 #include <string.h>
 #include <regex.h>
 
+#include "request_body.h"
 #include "request_pair.h"
 
 typedef struct request 
 {
 
     char *method;
-    char *message;
+    RequestBody *body;
     
 } Request;
 
@@ -20,7 +21,7 @@ Request *Request_parse(const char *req);
 
 RequestPair *Request_extract_data(const char *request, const char *key);
 
-char **Request_extract_method(const char *request);
+char *Request_extract_method(const char *request);
 
 void Request_destruct(Request *this);
 

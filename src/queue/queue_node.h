@@ -26,7 +26,7 @@ void Node_clear_message(Node *this);
 
 char *Node_get_message(const Node *this);
 
-void Node_set_message(Node *this, char *ms, int msSize);
+void Node_set_message(Node *this, const char *ms, int msSize);
 
 Node *Node_get_next(const Node *this);
 
@@ -40,7 +40,7 @@ struct node_methods
     void (*construct)(Node *this);
     void (*clearMessage)(Node *this);
     char *(*getMessage)(const Node *this);
-    void (*setMessage)(Node *this, char *ms, int msSize);
+    void (*setMessage)(Node *this, const char *ms, int msSize);
     Node *(*getNext)(const Node *this);
     void (*setNext)(Node *this, Node *nxt);
     void (*destruct)(Node *this);

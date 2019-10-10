@@ -71,6 +71,7 @@ static void Response_handle(const void *this)
 
     self->setHeaders(this);
     printf("headers added... ");
+    printf("meth: %s\n", req->method);
 
     // Consume.
     if (strcmp(req->method, "GET") == 0)
@@ -115,7 +116,7 @@ static void Response_handle(const void *this)
         self->setStatus(this, 200);
         
         Node *newNode = Node_new();
-        _Node.setMessage(newNode, req->message, strlen(req->message));
+        _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
         _Queue.add(queue, newNode);
 
         // printf("\n%s\n", self->status);
@@ -126,6 +127,13 @@ static void Response_handle(const void *this)
         // printf("\n%s\n", self->body);
 
     }
+    else
+    {
+        self->setStatus(this, 500);
+        self->body = (char *) malloc(1);
+        strcpy(self->body, "");
+    } 
+
     printf("body added... ");
     
 }
@@ -155,7 +163,7 @@ static void Response_set_status(const void *this, unsigned short int code)
     strcpy(self->status, PROTOCOL);
     strcat(self->status, " ");
     strcat(self->status, status_txt);
-    printf("status set... ");
+    printf("status %d set... ", code);
    
 }
 

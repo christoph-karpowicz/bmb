@@ -3,16 +3,17 @@
 Request *Request_parse(const char *req) 
 {
 
-    Request *request = (Request *) malloc(sizeof(Request));
-
     printf("Parsing request... ");
+    Request *request = (Request *) malloc(sizeof(Request));
+    request->body = RequestBody_new();
 
-    char **method = Request_extract_method(req);
-    printf("extracted method: %s... ", *method);
+    char *method = Request_extract_method(req);
+    printf("extracted method: %s... ", method); 
 
-    request->method = (char *) malloc(sizeof(char) * (strlen(*method) + 1));
-    strcpy(request->method, *method);
-    free(*method);
+    request->method = method;
+    // request->method = (char *) malloc(sizeof(char) * (strlen(*method) + 1));
+    // strcpy(request->method, *method);
+    // free(*method);
 
     if (strcmp(request->method, "POST") == 0) {
         
@@ -22,8 +23,11 @@ Request *Request_parse(const char *req)
         printf("extracted type: %s\n", typePair->getValue(typePair));
         RequestPair *queuePair = Request_extract_data(req, "queue");
         printf("extracted queue: %s\n", queuePair->getValue(queuePair));
-        
-        request->message = messagePair->getValue(messagePair);
+
+        request->body->add(request->body, messagePair);
+        request->body->add(request->body, typePair);
+        request->body->add(request->body, queuePair);
+
     }
     else if (strcmp(request->method, "GET") == 0) {
         
@@ -31,7 +35,10 @@ Request *Request_parse(const char *req)
         printf("extracted type: %s\n", typePair->getValue(typePair));
         RequestPair *queuePair = Request_extract_data(req, "queue");
         printf("extracted queue: %s\n", queuePair->getValue(queuePair));
-        
+
+        request->body->add(request->body, typePair);
+        request->body->add(request->body, queuePair);
+
     }
 
     return request;
@@ -109,7 +116,7 @@ RequestPair *Request_extract_data(const char *request, const char *key)
 
 }
 
-char **Request_extract_method(const char *request) 
+char *Request_extract_method(const char *request) 
 {
 
     const unsigned short int requestLength = strlen(request);
@@ -118,7 +125,7 @@ char **Request_extract_method(const char *request)
     unsigned short int i = 0;
     const char delimiter = ' ';
     char *method = (char *) malloc(0);
-    char **method_ptr;
+    // char **method_ptr;
 
     while (request[i] != delimiter) 
     {
@@ -128,15 +135,15 @@ char **Request_extract_method(const char *request)
     }
     method[i] = '\0';
 
-    method_ptr = &method;
-    return method_ptr;
+    // method_ptr = &method;
+    // return method_ptr;
+    return method;
 
 }
 
 void Request_destruct(Request *this)
 {
-    if (strcmp(this->method, "POST") == 0)
-        free(this->message);
+    this->body->destruct(this->body);
     free(this->method);
     free(this);
 }
