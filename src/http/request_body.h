@@ -12,6 +12,7 @@ typedef struct request_body
 {
 
     RequestPair **pairs;
+    size_t pairs_length;
 
     const char *(*get)(void *this, const char *key);
     void (*add)(void *this, RequestPair *pair);

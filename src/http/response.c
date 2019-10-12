@@ -71,7 +71,7 @@ static void Response_handle(const void *this)
 
     self->setHeaders(this);
     printf("headers added... ");
-    printf("meth: %s\n", req->method);
+    // printf("meth: %s\n", req->method);
 
     // Consume.
     if (strcmp(req->method, "GET") == 0)

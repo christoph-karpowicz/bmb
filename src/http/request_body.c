@@ -7,6 +7,7 @@ RequestBody *RequestBody_new()
 
     // Assign properties.
     newRequestBody->pairs = (RequestPair **) malloc(0);
+    newRequestBody->pairs_length = 0;
     
     // Assign methods.
     newRequestBody->add = &RequestBody_add;
@@ -23,9 +24,9 @@ void RequestBody_add(void *this, RequestPair *pair)
 {
 
     RequestBody *self = (RequestBody *)this;
-    const size_t pairs_length = sizeof(self->pairs) / sizeof(RequestPair *);
-    self->pairs = (RequestPair **) realloc(self->pairs, sizeof(self->pairs) + sizeof(RequestPair *));
-    self->pairs[pairs_length] = pair;
+    self->pairs_length++;
+    self->pairs = (RequestPair **) realloc(self->pairs, self->pairs_length * sizeof(RequestPair *));
+    self->pairs[self->pairs_length - 1] = pair;
     printf("%s added to request body... ", pair->getKey(pair));
 
 }
@@ -34,10 +35,9 @@ const char *RequestBody_get(void *this, const char *key)
 {
 
     RequestBody *self = (RequestBody *)this;
-    const size_t pairs_length = sizeof(self->pairs) / sizeof(RequestPair *);
     const char *empty = "";
 
-    for (unsigned short int i = 0; i < pairs_length; i++)
+    for (unsigned short int i = 0; i < self->pairs_length; i++)
     {
         RequestPair *pair = self->pairs[i];
         if (pair != NULL && strcmp(pair->getKey(pair), key) == 0) 
@@ -52,12 +52,16 @@ void RequestBody_destruct(void *this)
 {
 
     RequestBody *self = (RequestBody *)this;
-    const size_t pairs_length = sizeof(self->pairs) / sizeof(RequestPair *);
 
-    for (unsigned short int i = 0; i < pairs_length; i++)
+    for (unsigned short int i = 0; i < self->pairs_length; i++)
     {
-        free(self->pairs[i]);
+        if (self->pairs[i] != NULL)
+        {
+            // printf("free pair %s\n", self->pairs[i]->getKey(self->pairs[i]));
+            free(self->pairs[i]);
+        }
     }
     free(self->pairs);
+    free(this);
 
 }
