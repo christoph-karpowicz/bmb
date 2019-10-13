@@ -47,6 +47,7 @@ typedef struct socket_thread_arguments {
     char *client_message;
     char *buffer;
     Queue *queue;
+    unsigned long long time_start;
 } socket_thread_args;
 
 void error(const char *msg);

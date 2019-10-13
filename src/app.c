@@ -12,6 +12,7 @@
 #include "server/s_thread.h"
 #include "queue/queue.h"
 #include "queue/queue_node.h"
+#include "util/util.h"
 
 int main() {
 
@@ -39,6 +40,7 @@ int main() {
         args.client_message = server.client_message;
         args.buffer = server.buffer;
         args.queue = server.queue;
+        args.time_start = getEpochMilis();
 
         // Create separate thread for received client request.
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)

@@ -14,6 +14,7 @@
 #include "../queue/queue_node.h"
 #include "../http/request.h"
 #include "../http/response.h"
+#include "../util/util.h"
 
 extern pthread_mutex_t lock;
 

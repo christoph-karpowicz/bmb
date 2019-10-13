@@ -83,20 +83,34 @@ static void Response_handle(const void *this)
         char *json_end = "\" }";
         char *msg;
         
-        if (!_Queue.isEmpty(queue))
+        
+        if (strcmp(req->body->get(req->body, "type"), "consume") == 0)
+        {
+            if (!_Queue.isEmpty(queue))
+            {
+                self->setStatus(this, 200);
+                Node *node = _Queue.poll(queue);
+                msg = (char *) malloc(sizeof(char) * strlen(_Node.getMessage(node)) + 1);
+                strcpy(msg, _Node.getMessage(node));
+                _Node.destruct(node);
+            }
+            else
+            {
+                self->setStatus(this, 204);
+                char *queue_empty_msg = "Queue is empty.";
+                msg = (char *) malloc(sizeof(char) * strlen(queue_empty_msg) + 1);
+                strcpy(msg, queue_empty_msg);
+            }
+        }
+        else if (strcmp(req->body->get(req->body, "type"), "length") == 0)
         {
             self->setStatus(this, 200);
-            Node *node = _Queue.poll(queue);
-            msg = (char *) malloc(sizeof(char) * strlen(_Node.getMessage(node)) + 1);
-            strcpy(msg, _Node.getMessage(node));
-            _Node.destruct(node);
-        }
-        else
-        {
-            self->setStatus(this, 204);
-            char *queue_empty_msg = "Queue is empty.";
-            msg = (char *) malloc(sizeof(char) * strlen(queue_empty_msg) + 1);
-            strcpy(msg, queue_empty_msg);
+            const int queueSize = _Queue.size(queue);
+            const int queueSize_str_length = queueSize > 0 ? (int)((ceil(log10(queueSize))+1)*sizeof(char)) : 2;
+            char queueSize_str[queueSize_str_length];
+            sprintf(queueSize_str, "%d", queueSize);
+            msg = (char *) malloc(sizeof(char) * strlen(queueSize_str) + 1);
+            strcpy(msg, queueSize_str);
         }
 
         size_t body_len = strlen(msg) + strlen(json_start) + strlen(json_end) + 1;

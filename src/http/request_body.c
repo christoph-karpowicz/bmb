@@ -58,7 +58,7 @@ void RequestBody_destruct(void *this)
         if (self->pairs[i] != NULL)
         {
             // printf("free pair %s\n", self->pairs[i]->getKey(self->pairs[i]));
-            free(self->pairs[i]);
+            self->pairs[i]->destruct(self->pairs[i]);
         }
     }
     free(self->pairs);

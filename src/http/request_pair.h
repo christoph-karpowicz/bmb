@@ -14,6 +14,7 @@ typedef struct request_pair
 
     const char *(*getKey)(void *this);
     char *(*getValue)(void *this);
+    void (*destruct)(void *this);
     
 } RequestPair;
 
@@ -22,5 +23,7 @@ RequestPair *RequestPair_new(const char *key, char *value);
 const char *RequestPair_getKey(void *this);
 
 char *RequestPair_getValue(void *this);
+
+void RequestPair_destruct(void *this);
 
 #endif
