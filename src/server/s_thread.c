@@ -10,23 +10,17 @@ void *socketThread(void *args)
 
     int *newSocketPtr = arguments->socket;
     int newSocket = *newSocketPtr;
-
-    char *client_msg;
-    char *buff;
-
-    client_msg = arguments->client_message;
-    buff = arguments->buffer;
+    char msg[CLIENT_MESSAGE_SIZE];
 
     Queue *queue = arguments->queue;
 
     // Read client message.
     // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-    recv(newSocket, client_msg, CLIENT_MESSAGE_SIZE, 0);
+    recv(newSocket, msg, CLIENT_MESSAGE_SIZE, 0);
     
     // Receive and parse request.
-    // printf("Req:\n%s\n", client_msg);
-    Request *req = Request_parse(client_msg);    
-    // printf("****req %s\n", req->message);
+    // printf("Req:\n%s\n", msg);
+    Request *req = Request_parse(msg);
 
     Response *res = Response_new(req, queue);
     

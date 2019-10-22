@@ -96,7 +96,7 @@ static void Response_handle(const void *this)
             }
             else
             {
-                self->setStatus(this, 204);
+                self->setStatus(this, 200);
                 char *queue_empty_msg = "Queue is empty.";
                 msg = (char *) malloc(sizeof(char) * strlen(queue_empty_msg) + 1);
                 strcpy(msg, queue_empty_msg);

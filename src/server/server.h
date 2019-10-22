@@ -19,8 +19,6 @@
 typedef struct Server {
 
     // Properties.
-    char *client_message[CLIENT_MESSAGE_SIZE];
-    char *buffer[BUFFER_SIZE];
     int socket;
     int newSocket;
     struct sockaddr_in serverAddr;
@@ -44,12 +42,10 @@ void Server_init(Server *s);
 
 typedef struct socket_thread_arguments {
     int *socket;
-    char *client_message;
-    char *buffer;
     Queue *queue;
     unsigned long long time_start;
 } socket_thread_args;
 
-void error(const char *msg);
+void Server_error(const char *msg);
 
 #endif

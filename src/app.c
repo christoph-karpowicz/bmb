@@ -25,7 +25,7 @@ int main() {
     if (listen(server.socket, 50) == 0)
         printf("Listening\n");
     else
-        error("ERROR on listen attempt");
+        server.error("ERROR on listen attempt");
 
     pthread_t tid[50];
     int i = 0;
@@ -37,14 +37,12 @@ int main() {
 
         socket_thread_args args; 
         args.socket = &server.newSocket;
-        args.client_message = server.client_message;
-        args.buffer = server.buffer;
         args.queue = server.queue;
         args.time_start = getEpochMilis();
 
         // Create separate thread for received client request.
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
-            error("ERROR Failed to create thread");
+            server.error("ERROR Failed to create thread");
 
         printf("Request count: %d\n", *server.requestCounter);
 

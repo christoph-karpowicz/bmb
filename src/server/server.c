@@ -1,6 +1,6 @@
 #include "server.h"
 
-void error(const char *msg)
+void Server_error(const char *msg)
 {
     perror(msg);
     exit(1);
@@ -43,11 +43,8 @@ bool Server_create_socket(Server *s) {
 void Server_init(Server *s) {
 
     // Assign methods.
-    s->error = error;
+    s->error = Server_error;
 
-    s->client_message[CLIENT_MESSAGE_SIZE] = "\0";
-    s->buffer[BUFFER_SIZE] = "\0";
-    
     // Configure settings of the server address struct
     // Address family = Internet 
     s->serverAddr.sin_family = AF_INET;
