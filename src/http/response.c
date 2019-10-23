@@ -41,18 +41,14 @@ static void Response_assemble(const void *this)
     const size_t total_size = strlen(self->status) + 1 + headers_length + strlen(self->body) + 1;
     self->res_string = (char *) malloc(sizeof(char) * total_size);
     
-    // printf("\nh-len: %d\n", headers_length);
     strcpy(self->res_string, self->status);
     strcat(self->res_string, "\n");
     for (unsigned short int i = 0; i < self->headers_count; i++) {
         strcat(self->res_string, self->headers[i]);
         strcat(self->res_string, "\n");
     }
-    // strcat(self->res_string, "\n");
     strcat(self->res_string, self->body);
     printf("assembling done... \n");
-    
-    // printf("\n%s\n", self->res_string);
     
 }
 
@@ -73,7 +69,15 @@ static void Response_handle(const void *this)
     printf("headers added... ");
     // printf("meth: %s\n", req->method);
 
-    // Consume.
+    if (req == NULL)
+    {
+        self->setStatus(this, 500);
+        self->body = (char *) malloc(1);
+        strcpy(self->body, "");
+        return;
+    }
+
+    // GET request.
     if (strcmp(req->method, "GET") == 0)
     {
 
@@ -84,6 +88,7 @@ static void Response_handle(const void *this)
         char *msg;
         
         
+        // Consume.
         if (strcmp(req->body->get(req->body, "type"), "consume") == 0)
         {
             if (!_Queue.isEmpty(queue))
@@ -102,6 +107,7 @@ static void Response_handle(const void *this)
                 strcpy(msg, queue_empty_msg);
             }
         }
+        // Return queue length.
         else if (strcmp(req->body->get(req->body, "type"), "length") == 0)
         {
             self->setStatus(this, 200);
@@ -112,6 +118,26 @@ static void Response_handle(const void *this)
             msg = (char *) malloc(sizeof(char) * strlen(queueSize_str) + 1);
             strcpy(msg, queueSize_str);
         }
+        // Peek queue Node at specified index.
+        else if (strcmp(req->body->get(req->body, "type"), "peek") == 0)
+        {
+            self->setStatus(this, 200);
+            const int index = atoi(req->body->get(req->body, "index"));
+            const int queueSize = _Queue.size(queue);
+            printf("size: %d, i: %d\n", queueSize, index);
+            if (queueSize > index)
+            {
+                Node *node = _Queue.get(queue, index);
+                msg = (char *) malloc(sizeof(char) * strlen(_Node.getMessage(node)) + 1);
+                strcpy(msg, _Node.getMessage(node));
+            }
+            else 
+            {
+                char *res = "Node index out of range.";
+                msg = (char *) malloc(sizeof(char) * strlen(res) + 1);
+                strcpy(msg, res);
+            }
+        }
 
         size_t body_len = strlen(msg) + strlen(json_start) + strlen(json_end) + 1;
         self->body = (char *) malloc(sizeof(char) * body_len);
@@ -121,6 +147,7 @@ static void Response_handle(const void *this)
         free(msg);
 
     }
+    // POST request.
     // Produce.
     else if (strcmp(req->method, "POST") == 0)
     {
@@ -141,6 +168,7 @@ static void Response_handle(const void *this)
         // printf("\n%s\n", self->body);
 
     }
+    // ERROR - request type not found.
     else
     {
         self->setStatus(this, 500);

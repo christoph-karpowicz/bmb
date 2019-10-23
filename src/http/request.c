@@ -10,10 +10,13 @@ Request *Request_parse(const char *req)
     char *method = Request_extract_method(req);
     printf("extracted method: %s... ", method); 
 
+    if (method == NULL)
+    {
+        free(request);
+        return NULL;
+    } 
+
     request->method = method;
-    // request->method = (char *) malloc(sizeof(char) * (strlen(*method) + 1));
-    // strcpy(request->method, *method);
-    // free(*method);
 
     if (strcmp(request->method, "POST") == 0) {
         
@@ -35,6 +38,12 @@ Request *Request_parse(const char *req)
         printf("extracted type: %s\n", typePair->getValue(typePair));
         RequestPair *queuePair = Request_extract_data(req, "queue");
         printf("extracted queue: %s\n", queuePair->getValue(queuePair));
+        RequestPair *indexPair = Request_extract_data(req, "index");
+        if (indexPair != NULL)
+        {
+            printf("extracted index: %s\n", indexPair->getValue(indexPair));
+            request->body->add(request->body, indexPair);
+        }
 
         request->body->add(request->body, typePair);
         request->body->add(request->body, queuePair);
@@ -66,7 +75,6 @@ RequestPair *Request_extract_data(const char *request, const char *key)
         regex_pattern_end = "=)([^&]*)";
 
     char *regex_pattern = (char *) malloc(sizeof(char) * (strlen(regex_pattern_start) + strlen(key) + strlen(regex_pattern_end) + 1));
-    // char *regex_pattern = "(data=)(.*)(&|$)";
     strcpy(regex_pattern, regex_pattern_start);
     strcat(regex_pattern, key);
     strcat(regex_pattern, regex_pattern_end);
@@ -125,7 +133,6 @@ char *Request_extract_method(const char *request)
     unsigned short int i = 0;
     const char delimiter = ' ';
     char *method = (char *) malloc(0);
-    // char **method_ptr;
 
     while (request[i] != delimiter) 
     {
@@ -135,14 +142,13 @@ char *Request_extract_method(const char *request)
     }
     method[i] = '\0';
 
-    // method_ptr = &method;
-    // return method_ptr;
     return method;
 
 }
 
 void Request_destruct(Request *this)
 {
+    if (this == NULL) return;
     this->body->destruct(this->body);
     free(this->method);
     free(this);
