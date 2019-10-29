@@ -18,17 +18,17 @@ RequestPair *RequestPair_new(const char *key, char *value)
 
 }
 
-const char *RequestPair_getKey(void *this)
+static const char *RequestPair_getKey(void *this)
 {
     return ((RequestPair *)this)->key;
 }
 
-char *RequestPair_getValue(void *this)
+static char *RequestPair_getValue(void *this)
 {
     return ((RequestPair *)this)->value;
 }
 
-void RequestPair_destruct(void *this)
+static void RequestPair_destruct(void *this)
 {
     free(((RequestPair *)this)->value);
     free(this);

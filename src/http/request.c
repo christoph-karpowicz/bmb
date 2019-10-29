@@ -54,7 +54,7 @@ Request *Request_parse(const char *req)
     
 }
 
-RequestPair *Request_extract_data(const char *request, const char *key) 
+static RequestPair *Request_extract_data(const char *request, const char *key) 
 {
 
     regex_t regex;
@@ -99,8 +99,9 @@ RequestPair *Request_extract_data(const char *request, const char *key)
         
         data = (char *) malloc(sizeof(char) * (diff + 1));
         strncpy(data, &request[start], diff);
+        data[diff] = '\0';
 
-        // printf("Match, start: %d, finish: %d\n", start, finish);
+        // printf("=======***** Diff: %d, data: %s\n", diff, data);
         
     }
     else if (reti == REG_NOMATCH)
@@ -124,7 +125,7 @@ RequestPair *Request_extract_data(const char *request, const char *key)
 
 }
 
-char *Request_extract_method(const char *request) 
+static char *Request_extract_method(const char *request) 
 {
 
     const unsigned short int requestLength = strlen(request);
