@@ -10,6 +10,8 @@ Response *Response_new(Request *req, Queue *queue)
     newResponse->assemble = &Response_assemble;
     newResponse->get = &Response_get;
     newResponse->handle = &Response_handle;
+    newResponse->handleGET = &Response_handle_GET;
+    newResponse->handlePOST = &Response_handle_POST;
     newResponse->setHeaders = &Response_set_headers;
     newResponse->setStatus = &Response_set_status;
     newResponse->destruct = &Response_destruct;
@@ -25,6 +27,7 @@ static void Response_construct(void *this, Request *req, Queue *queue)
     printf("Response constructor called.\n");
     ((Response *)this)->req = req;
     ((Response *)this)->queue = queue;
+    ((Response *)this)->json_body = cJSON_CreateObject();
 
 }
 
@@ -39,7 +42,7 @@ static void Response_assemble(const void *this)
     }
 
     const size_t total_size = strlen(self->status) + 1 + headers_length + strlen(self->body) + 1;
-    self->res_string = (char *) malloc(sizeof(char) * total_size);
+    self->res_string = (char *) malloc(total_size);
     
     strcpy(self->res_string, self->status);
     strcat(self->res_string, "\n");
@@ -77,107 +80,122 @@ static void Response_handle(const void *this)
         return;
     }
 
+    char *msg = NULL;
+
     // GET request.
-    if (strcmp(req->method, "GET") == 0)
-    {
-
-        printf("recognized as GET... ");
-
-        char *json_start = "{ \"msg\": \"";
-        char *json_end = "\" }";
-        char *msg;
-        
-        
-        // Consume.
-        if (strcmp(req->body->get(req->body, "type"), "consume") == 0)
-        {
-            if (!_Queue.isEmpty(queue))
-            {
-                self->setStatus(this, 200);
-                Node *node = _Queue.poll(queue);
-                msg = (char *) malloc(sizeof(char) * strlen(_Node.getMessage(node)) + 1);
-                strcpy(msg, _Node.getMessage(node));
-                _Node.destruct(node);
-            }
-            else
-            {
-                self->setStatus(this, 200);
-                char *queue_empty_msg = "Queue is empty.";
-                msg = (char *) malloc(sizeof(char) * strlen(queue_empty_msg) + 1);
-                strcpy(msg, queue_empty_msg);
-            }
-        }
-        // Return queue length.
-        else if (strcmp(req->body->get(req->body, "type"), "length") == 0)
-        {
-            self->setStatus(this, 200);
-            const int queueSize = _Queue.size(queue);
-            const int queueSize_str_length = queueSize > 0 ? (int)((ceil(log10(queueSize))+1)*sizeof(char)) : 2;
-            char queueSize_str[queueSize_str_length];
-            sprintf(queueSize_str, "%d", queueSize);
-            msg = (char *) malloc(sizeof(char) * strlen(queueSize_str) + 1);
-            strcpy(msg, queueSize_str);
-        }
-        // Peek queue Node at specified index.
-        else if (strcmp(req->body->get(req->body, "type"), "peek") == 0)
-        {
-            self->setStatus(this, 200);
-            const int index = atoi(req->body->get(req->body, "index"));
-            const int queueSize = _Queue.size(queue);
-            printf("size: %d, i: %d\n", queueSize, index);
-            if (queueSize > index)
-            {
-                Node *node = _Queue.get(queue, index);
-                msg = (char *) malloc(sizeof(char) * strlen(_Node.getMessage(node)) + 1);
-                strcpy(msg, _Node.getMessage(node));
-            }
-            else 
-            {
-                char *res = "Node index out of range.";
-                msg = (char *) malloc(sizeof(char) * strlen(res) + 1);
-                strcpy(msg, res);
-            }
-        }
-
-        size_t body_len = strlen(msg) + strlen(json_start) + strlen(json_end) + 1;
-        self->body = (char *) malloc(sizeof(char) * body_len);
-        strcpy(self->body, json_start);
-        strcat(self->body, msg);
-        strcat(self->body, json_end);
-        free(msg);
-
+    if (strcmp(req->method, "GET") == 0) {
+        self->handleGET(this, &msg);
     }
     // POST request.
-    // Produce.
-    else if (strcmp(req->method, "POST") == 0)
-    {
-
-        printf("recognized as POST... ");
-
-        self->setStatus(this, 200);
-        
-        Node *newNode = Node_new();
-        _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
-        _Queue.add(queue, newNode);
-
-        // printf("\n%s\n", self->status);
-
-        const char *body = "{ \"msg\": \"Message produced.\" }";
-        self->body = (char *) malloc(sizeof(char) * (strlen(body) + 1));
-        strcpy(self->body, body);
-        // printf("\n%s\n", self->body);
-
+    else if (strcmp(req->method, "POST") == 0) {
+        self->handlePOST(this, &msg);
     }
+
+    // printf("#####msg: %s\n", msg);
+
     // ERROR - request type not found.
-    else
-    {
+    if (msg == NULL) {
         self->setStatus(this, 500);
-        self->body = (char *) malloc(1);
-        strcpy(self->body, "");
-    } 
+        msg = (char *) malloc(1);
+        strcpy(msg, "");
+    }
+
+    cJSON *json_msg = NULL;
+    json_msg = cJSON_CreateString(msg);
+    if (json_msg == NULL)
+    {
+        // goto end;
+    }
+    cJSON_AddItemToObject(self->json_body, "msg", json_msg);
+    char *json_response_string = cJSON_Print(self->json_body);
+    size_t body_len = strlen(json_response_string) + 1;
+    self->body = (char *) malloc(sizeof(char) * body_len);
+    strcpy(self->body, json_response_string);
+
+    free(msg);
 
     printf("body added... ");
     
+}
+
+static void Response_handle_GET(const void *this, char **msg)
+{
+    printf("recognized as GET... ");
+
+    Response *self = (Response *)this;
+    const Request *req = self->req;
+    Queue *queue = self->queue;
+
+    // Consume.
+    if (strcmp(req->body->get(req->body, "type"), "consume") == 0)
+    {
+        if (!_Queue.isEmpty(queue))
+        {
+            self->setStatus(this, 200);
+            Node *node = _Queue.poll(queue);
+            *msg = (char *) malloc(strlen(_Node.getMessage(node)) + 1);
+            strcpy(*msg, _Node.getMessage(node));
+            _Node.destruct(node);
+        }
+        else
+        {
+            self->setStatus(this, 200);
+            char *queue_empty_msg = "Queue is empty.";
+            *msg = (char *) malloc(strlen(queue_empty_msg) + 1);
+            strcpy(*msg, queue_empty_msg);
+        }
+    }
+    // Return queue length.
+    else if (strcmp(req->body->get(req->body, "type"), "length") == 0)
+    {
+        self->setStatus(this, 200);
+        const int queueSize = _Queue.size(queue);
+        char *queueSize_str = intToString(queueSize);
+        *msg = (char *) malloc(strlen(queueSize_str) + 1);
+        strcpy(*msg, queueSize_str);
+        free(queueSize_str);
+    }
+    // Peek queue Node at specified index.
+    else if (strcmp(req->body->get(req->body, "type"), "peek") == 0)
+    {
+        self->setStatus(this, 200);
+        const int index = atoi(req->body->get(req->body, "index"));
+        const int queueSize = _Queue.size(queue);
+        // printf("size: %d, i: %d\n", queueSize, index);
+        if (queueSize > index)
+        {
+            Node *node = _Queue.get(queue, index);
+            *msg = (char *) malloc(strlen(_Node.getMessage(node)) + 1);
+            strcpy(*msg, _Node.getMessage(node));
+        }
+        else 
+        {
+            char *res = "Node index out of range.";
+            *msg = (char *) malloc(strlen(res) + 1);
+            strcpy(*msg, res);
+        }
+    }
+
+}
+
+static void Response_handle_POST(const void *this, char **msg)
+{
+    printf("recognized as POST... ");
+
+    Response *self = (Response *)this;
+    const Request *req = self->req;
+    Queue *queue = self->queue;
+
+    self->setStatus(this, 200);
+    
+    // Produce.
+    Node *newNode = Node_new();
+    _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
+    _Queue.add(queue, newNode);
+
+    char *res = "Message produced.";
+    *msg = (char *) malloc(strlen(res) + 1);
+    strcpy(*msg, res);
 }
 
 static void Response_set_status(const void *this, unsigned short int code)
@@ -201,7 +219,7 @@ static void Response_set_status(const void *this, unsigned short int code)
             status_txt = STATUS_200;
     }
     
-    self->status = (char *) malloc(sizeof(char) * (strlen(PROTOCOL) + strlen(status_txt) + 2));
+    self->status = (char *) malloc(strlen(PROTOCOL) + strlen(status_txt) + 2);
     strcpy(self->status, PROTOCOL);
     strcat(self->status, " ");
     strcat(self->status, status_txt);
@@ -217,16 +235,16 @@ static void Response_set_headers(const void *this)
     self->headers_count = 5;
     self->headers = (char **) malloc(sizeof(char *) * self->headers_count);
     // Alow origin header.
-    self->headers[0] = (char *) malloc(sizeof(char) * (strlen(HEADER_ALLOW_ORIGIN) + 1));
+    self->headers[0] = (char *) malloc(strlen(HEADER_ALLOW_ORIGIN) + 1);
     strcpy(self->headers[0], HEADER_ALLOW_ORIGIN);
     // Connection close header.
-    self->headers[1] = (char *) malloc(sizeof(char) * (strlen(HEADER_CONNECTION_CLOSE + 1)));
+    self->headers[1] = (char *) malloc(strlen(HEADER_CONNECTION_CLOSE + 1));
     strcpy(self->headers[1], HEADER_CONNECTION_CLOSE);
     // Content type header.
-    self->headers[2] = (char *) malloc(sizeof(char) * (strlen(HEADER_CONTENT_TYPE) + 1));
+    self->headers[2] = (char *) malloc(strlen(HEADER_CONTENT_TYPE) + 1);
     strcpy(self->headers[2], HEADER_CONTENT_TYPE);
     // Host header.
-    self->headers[3] = (char *) malloc(sizeof(char) * (strlen(HEADER_HOST) + 1));
+    self->headers[3] = (char *) malloc(strlen(HEADER_HOST) + 1);
     strcpy(self->headers[3], HEADER_HOST);
 
     // Date header.
@@ -240,10 +258,10 @@ static void Response_set_headers(const void *this)
     }    
     // printf("UTC time: %s", asctime(ptm));
     char *date_head = "Date: ";
-    char *date = (char *) malloc(sizeof(char) * (strlen(date_head) + strlen(asctime(ptm)) + 1));
+    char *date = (char *) malloc(strlen(date_head) + strlen(asctime(ptm)) + 1);
     strcpy(date, date_head);
     strcat(date, asctime(ptm));
-    self->headers[4] = (char *) malloc(sizeof(char) * (strlen(date) + 1));
+    self->headers[4] = (char *) malloc(strlen(date) + 1);
     strcpy(self->headers[4], date);
     free(date);
 
@@ -251,12 +269,14 @@ static void Response_set_headers(const void *this)
 
 static void Response_destruct(void *this)
 {
-    free(((Response *)this)->status);
-    for (unsigned short int i = 0; i < ((Response *)this)->headers_count; i++) {
-        free(((Response *)this)->headers[i]);
+    Response *self = (Response *)this;
+    free(self->status);
+    for (unsigned short int i = 0; i < self->headers_count; i++) {
+        free(self->headers[i]);
     }
-    free(((Response *)this)->headers);
-    free(((Response *)this)->body);
-    free(((Response *)this)->res_string);
+    free(self->headers);
+    free(self->body);
+    free(self->res_string);
+    cJSON_Delete(self->json_body);
     free(this);
 }

@@ -1,4 +1,4 @@
-LIBS = -pthread -lnsl -lm
+LIBS = -pthread -lnsl -lm -lcjson
 SRC = $(shell find ./src -name '*.c')
 
 main:

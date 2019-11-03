@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h>
+#include <cjson/cJSON.h>
 
 #include "../queue/queue.h"
 #include "../queue/queue_node.h"
 #include "request.h"
+#include "../util/util.h"
 
 #define PROTOCOL "HTTP/1.1"
 #define STATUS_200 "200 OK"
@@ -26,6 +27,7 @@ typedef struct response
     char *status;
     char **headers;
     unsigned short int headers_count;
+    cJSON *json_body;
     char *body;
     Request *req;
     Queue *queue;
@@ -35,6 +37,9 @@ typedef struct response
     void (*assemble)(const void *this);
     char *(*get)(const void *this);
     void (*handle)(const void *this);
+    void (*handleGET)(const void *this, char **msg);
+    void (*handlePOST)(const void *this, char **msg);
+    // void (*handlePOST)(const void *this);
     void (*setHeaders)(const void *this);
     void (*setStatus)(const void *this, unsigned short int code);
     void (*destruct)(void *this);
@@ -50,6 +55,10 @@ static void Response_assemble(const void *this);
 static char *Response_get(const void *this);
 
 static void Response_handle(const void *this);
+
+static void Response_handle_GET(const void *this, char **msg);
+
+static void Response_handle_POST(const void *this, char **msg);
 
 static void Response_set_headers(const void *this);
 
