@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "server/server.h"
 #include "server/s_thread.h"
@@ -14,12 +15,39 @@
 #include "queue/queue_node.h"
 #include "util/util.h"
 
+void close_signal_handler(int sig)
+{
+    if (server_ptr == NULL) exit(1);
+    
+    char c;
+
+    printf("\n========\n");
+    printf("Ending ...\n");
+    printf("* request count: %d\n", *server_ptr->requestCounter);
+    printf("* memory allocations: %d\n", server_ptr->mem_alloc);
+    printf("* memory freed: %d\n", server_ptr->mem_freed);
+    printf("========\n");
+
+    signal(sig, SIG_IGN);
+    printf("Do you really want to quit? [y/n]");
+    c = getchar();
+    if (c == 'y' || c == 'Y')
+        exit(1);
+    else
+        signal(SIGINT, close_signal_handler);
+    getchar();
+}
+
 int main() {
+
+    signal(SIGINT, close_signal_handler);
 
     Server server;
     Server_init(&server);
     Server_create_socket(&server);
     Server_bind(&server);
+
+    server_ptr = &server;
 
     //Listen on the socket, with 50 max connection requests queued 
     if (listen(server.socket, 50) == 0)
@@ -36,8 +64,7 @@ int main() {
         Server_accept(&server);
 
         socket_thread_args args; 
-        args.socket = &server.newSocket;
-        args.queue = server.queue;
+        args.server = &server;
         args.time_start = getEpochMilis();
 
         // Create separate thread for received client request.

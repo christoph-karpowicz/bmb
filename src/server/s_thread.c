@@ -8,15 +8,15 @@ void *socketThread(void *args)
     printf("Socket thread opened.\n");
     socket_thread_args *arguments = (socket_thread_args*)args;
 
-    int *newSocketPtr = arguments->socket;
-    int newSocket = *newSocketPtr;
+    Server *server = arguments->server;
+    int *newSocketPtr = &server->newSocket;
     char msg[CLIENT_MESSAGE_SIZE];
 
-    Queue *queue = arguments->queue;
+    Queue *queue = server->queue;
 
     // Read client message.
     // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-    recv(newSocket, msg, CLIENT_MESSAGE_SIZE, 0);
+    recv(*newSocketPtr, msg, CLIENT_MESSAGE_SIZE, 0);
     
     // Receive and parse request.
     // printf("Req:\n%s\n", msg);
@@ -35,12 +35,12 @@ void *socketThread(void *args)
     // printf("Res:\n%s\n", res->get(res));
     // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
     printf("Time:%llu\n", getEpochMilis() - arguments->time_start);
-    send(newSocket, res->get(res), strlen(res->get(res)), 0);
+    send(*newSocketPtr, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
 
     _Queue.displayAll(queue); 
     printf("Exit socket thread.\n");
-    close(newSocket);
+    close(*newSocketPtr);
 
     pthread_exit(NULL);
     

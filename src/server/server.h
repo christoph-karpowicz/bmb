@@ -26,11 +26,15 @@ typedef struct Server {
     socklen_t addr_size;
     Queue *queue;
     int *requestCounter;
+    int mem_alloc;
+    int mem_freed;
     
     // Methods.
     void (*error)(const char *msg);
 
 } Server;
+
+extern Server *server_ptr;
 
 bool Server_accept(Server *s);
 
@@ -41,8 +45,7 @@ bool Server_create_socket(Server *s);
 void Server_init(Server *s);
 
 typedef struct socket_thread_arguments {
-    int *socket;
-    Queue *queue;
+    Server *server;
     unsigned long long time_start;
 } socket_thread_args;
 

@@ -1,5 +1,7 @@
 #include "server.h"
 
+Server *server_ptr = NULL;
+
 void Server_error(const char *msg)
 {
     perror(msg);
@@ -64,5 +66,8 @@ void Server_init(Server *s) {
     // Start request counter.
     s->requestCounter = (int *) malloc(sizeof(int));
     *s->requestCounter = 0;
+
+    s->mem_alloc = 0;
+    s->mem_freed = 0;
 
 }
