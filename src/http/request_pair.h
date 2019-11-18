@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../util/mem.h"
 
 typedef struct request_pair 
 {

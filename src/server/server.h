@@ -11,6 +11,7 @@
 #include <stdbool.h>
 
 #include "../queue/queue.h"
+#include "../util/mem.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -25,9 +26,7 @@ typedef struct Server {
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;
     Queue *queue;
-    int *requestCounter;
-    int mem_alloc;
-    int mem_freed;
+    int requestCounter;
     
     // Methods.
     void (*error)(const char *msg);

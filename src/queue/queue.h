@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "queue_node.h"
+#include "../util/mem.h"
 
 typedef struct queue 
 {

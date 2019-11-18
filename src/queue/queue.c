@@ -19,7 +19,7 @@ const struct queue_methods _Queue =
 
 Queue *Queue_new()
 {
-    Queue *newQueue = (Queue *) malloc(sizeof(Queue));
+    Queue *newQueue = (Queue *) mem_alloc(sizeof(Queue));
     newQueue->mth = &_Queue;
     newQueue->mth->construct(newQueue);
     return newQueue;    
@@ -56,7 +56,7 @@ void Queue_clear(Queue *this)
 
     int queueSize = _Queue.size(this);
     
-    Node **asArray = (Node **) malloc(sizeof(Node *) * queueSize);
+    Node **asArray = (Node **) mem_alloc(sizeof(Node *) * queueSize);
 
     Node *el = this->root;
     int i = 0;
@@ -74,7 +74,7 @@ void Queue_clear(Queue *this)
         _Node.destruct(asArray[j]);
     }
 
-    free(asArray);
+    mem_free(asArray);
 
 }
 
@@ -187,6 +187,6 @@ int Queue_size(const Queue *this)
 void Queue_destruct(Queue *this)
 {
 
-    free(this);
+    mem_free(this);
 
 }

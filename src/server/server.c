@@ -16,7 +16,7 @@ bool Server_accept(Server *s) {
         s->error("ERROR on accept");
         return false;
     }
-    ++*s->requestCounter;
+    ++s->requestCounter;
     return true;
 }
 
@@ -43,7 +43,7 @@ bool Server_create_socket(Server *s) {
 }
 
 void Server_init(Server *s) {
-
+    
     // Assign methods.
     s->error = Server_error;
 
@@ -64,10 +64,6 @@ void Server_init(Server *s) {
     s->queue = Queue_new();
 
     // Start request counter.
-    s->requestCounter = (int *) malloc(sizeof(int));
-    *s->requestCounter = 0;
-
-    s->mem_alloc = 0;
-    s->mem_freed = 0;
+    s->requestCounter = 0;
 
 }

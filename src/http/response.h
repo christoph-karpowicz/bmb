@@ -11,6 +11,7 @@
 #include "../queue/queue_node.h"
 #include "request.h"
 #include "../util/util.h"
+#include "../util/mem.h"
 
 #define PROTOCOL "HTTP/1.1"
 #define STATUS_200 "200 OK"

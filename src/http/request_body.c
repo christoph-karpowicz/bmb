@@ -3,10 +3,10 @@
 RequestBody *RequestBody_new()
 {
 
-    RequestBody *newRequestBody = (RequestBody *) malloc(sizeof(RequestBody));
+    RequestBody *newRequestBody = (RequestBody *) mem_alloc(sizeof(RequestBody));
 
     // Assign properties.
-    newRequestBody->pairs = (RequestPair **) malloc(0);
+    newRequestBody->pairs = (RequestPair **) mem_alloc(0);
     newRequestBody->pairs_length = 0;
     
     // Assign methods.
@@ -61,7 +61,7 @@ void RequestBody_destruct(void *this)
             self->pairs[i]->destruct(self->pairs[i]);
         }
     }
-    free(self->pairs);
-    free(this);
+    mem_free(self->pairs);
+    mem_free(this);
 
 }

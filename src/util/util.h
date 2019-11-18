@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <math.h>
+#include "mem.h"
 
 unsigned long long getEpochMilis();
 

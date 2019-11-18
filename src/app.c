@@ -14,6 +14,7 @@
 #include "queue/queue.h"
 #include "queue/queue_node.h"
 #include "util/util.h"
+#include "util/mem.h"
 
 void close_signal_handler(int sig)
 {
@@ -23,16 +24,19 @@ void close_signal_handler(int sig)
 
     printf("\n========\n");
     printf("Ending ...\n");
-    printf("* request count: %d\n", *server_ptr->requestCounter);
-    printf("* memory allocations: %d\n", server_ptr->mem_alloc);
-    printf("* memory freed: %d\n", server_ptr->mem_freed);
-    printf("========\n");
 
     signal(sig, SIG_IGN);
     printf("Do you really want to quit? [y/n]");
     c = getchar();
-    if (c == 'y' || c == 'Y')
+    if (c == 'y' || c == 'Y') {
+        _Queue.clear(server_ptr->queue);
+        _Queue.destruct(server_ptr->queue);
+        printf("* request count: %d\n", server_ptr->requestCounter);
+        printf("* memory allocations: %d\n", mem_allocated);
+        printf("* memory freed: %d\n", mem_freed);
+        printf("========\n");
         exit(1);
+    }
     else
         signal(SIGINT, close_signal_handler);
     getchar();
@@ -71,7 +75,7 @@ int main() {
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
             server.error("ERROR Failed to create thread");
 
-        printf("Request count: %d\n", *server.requestCounter);
+        printf("Request count: %d\n", server.requestCounter);
 
         if (i >= 50)
         {

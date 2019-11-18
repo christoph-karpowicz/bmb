@@ -3,7 +3,7 @@
 RequestPair *RequestPair_new(const char *key, char *value)
 {
 
-    RequestPair *newRequestPair = (RequestPair *) malloc(sizeof(RequestPair));
+    RequestPair *newRequestPair = (RequestPair *) mem_alloc(sizeof(RequestPair));
 
     // Assign properties.
     newRequestPair->key = key;
@@ -30,6 +30,6 @@ static char *RequestPair_getValue(void *this)
 
 static void RequestPair_destruct(void *this)
 {
-    free(((RequestPair *)this)->value);
-    free(this);
+    mem_free(((RequestPair *)this)->value);
+    mem_free(this);
 }

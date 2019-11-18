@@ -4,7 +4,7 @@ Request *Request_parse(const char *req)
 {
 
     printf("Parsing request... ");
-    Request *request = (Request *) malloc(sizeof(Request));
+    Request *request = (Request *) mem_alloc(sizeof(Request));
     request->body = RequestBody_new();
 
     char *method = Request_extract_method(req);
@@ -12,7 +12,7 @@ Request *Request_parse(const char *req)
 
     if (method == NULL)
     {
-        free(request);
+        mem_free(request);
         return NULL;
     } 
 
@@ -62,8 +62,8 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
     const unsigned short int subexNo = 3;
     regmatch_t rm[subexNo];
     unsigned short int reti;
-    char msgbuf[100];
     char *data = NULL;
+    bool no_match = false;
 
     // Compile regex.
     char *regex_pattern_start = "(";
@@ -74,22 +74,21 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
     else
         regex_pattern_end = "=)([^&]*)";
 
-    char *regex_pattern = (char *) malloc(sizeof(char) * (strlen(regex_pattern_start) + strlen(key) + strlen(regex_pattern_end) + 1));
+    char *regex_pattern = (char *) mem_alloc(sizeof(char) * (strlen(regex_pattern_start) + strlen(key) + strlen(regex_pattern_end) + 1));
     strcpy(regex_pattern, regex_pattern_start);
     strcat(regex_pattern, key);
     strcat(regex_pattern, regex_pattern_end);
     reti = regcomp(&regex, regex_pattern, REG_EXTENDED);
-    free(regex_pattern);
-    if (reti)
-    { 
+    mem_free(regex_pattern);
+    
+    if (reti) {
         fprintf(stderr, "Could not compile regex\n");
         exit(1); 
     }
 
     // Execute regex.
     reti = regexec(&regex, request, subexNo, rm, 0);
-    if (!reti)
-    {
+    if (!reti) {
 
         unsigned short int start = rm[2].rm_so;
         unsigned short int finish = rm[2].rm_eo;
@@ -97,20 +96,19 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
 
         if (diff <= 0) return NULL;
         
-        data = (char *) malloc(sizeof(char) * (diff + 1));
+        data = (char *) mem_alloc(sizeof(char) * (diff + 1));
         strncpy(data, &request[start], diff);
         data[diff] = '\0';
 
         // printf("=======***** Diff: %d, data: %s\n", diff, data);
         
     }
-    else if (reti == REG_NOMATCH)
-    {
-        puts("No match");
-        return NULL;
+    else if (reti == REG_NOMATCH) {
+        no_match = true;
+        printf("No match for %s\n", key);
     }
-    else
-    {
+    else {
+        char msgbuf[100];
         regerror(reti, &regex, msgbuf, sizeof(msgbuf));
         fprintf(stderr, "Regex match failed: %s\n", msgbuf);
         exit(1);
@@ -118,6 +116,8 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
 
     // Free compiled regex.
     regfree(&regex);
+
+    if (no_match) return NULL;
 
     RequestPair *reqPair = RequestPair_new(key, data);
 
@@ -133,7 +133,7 @@ static char *Request_extract_method(const char *request)
     
     unsigned short int i = 0;
     const char delimiter = ' ';
-    char *method = (char *) malloc(0);
+    char *method = (char *) mem_alloc(0);
 
     while (request[i] != delimiter) 
     {
@@ -151,6 +151,7 @@ void Request_destruct(Request *this)
 {
     if (this == NULL) return;
     this->body->destruct(this->body);
-    free(this->method);
-    free(this);
+    if (this->method != NULL)
+        mem_free(this->method);
+    mem_free(this);
 }

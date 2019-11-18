@@ -5,9 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <stdbool.h>
 
 #include "request_body.h"
 #include "request_pair.h"
+#include "../util/mem.h"
 
 typedef struct request 
 {

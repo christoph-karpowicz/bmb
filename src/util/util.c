@@ -16,7 +16,7 @@ unsigned long long getEpochMilis()
 char *intToString(const int i)
 {
     const int queueSize_str_length = i > 0 ? (int)(ceil(log10(i)) + 1) : 2;
-    char *queueSize_str = (char *) malloc(queueSize_str_length + 1);
+    char *queueSize_str = (char *) mem_alloc(queueSize_str_length + 1);
     sprintf(queueSize_str, "%d", i);
     return queueSize_str;
 }
