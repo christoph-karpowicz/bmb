@@ -5,6 +5,7 @@ Request *Request_parse(const char *req)
 
     printf("Parsing request... ");
     Request *request = (Request *) mem_alloc(sizeof(Request));
+    request->method = NULL;
     request->body = RequestBody_new();
 
     char *method = Request_extract_method(req);
@@ -12,32 +13,35 @@ Request *Request_parse(const char *req)
 
     if (method == NULL)
     {
-        mem_free(request);
+        Request_destruct(request);
         return NULL;
     } 
 
     request->method = method;
 
+    RequestPair *typePair = Request_extract_data(req, "type");
+    if (typePair != NULL) {
+        printf("extracted type: %s\n", typePair->getValue(typePair));
+        request->body->add(request->body, typePair);
+    }
+
+    RequestPair *queuePair = Request_extract_data(req, "queue");
+    if (queuePair != NULL) {
+        printf("extracted queue: %s\n", queuePair->getValue(queuePair));
+        request->body->add(request->body, queuePair);
+    }
+
     if (strcmp(request->method, "POST") == 0) {
         
         RequestPair *messagePair = Request_extract_data(req, "message");
-        printf("extracted message: %s\n", messagePair->getValue(messagePair));
-        RequestPair *typePair = Request_extract_data(req, "type");
-        printf("extracted type: %s\n", typePair->getValue(typePair));
-        RequestPair *queuePair = Request_extract_data(req, "queue");
-        printf("extracted queue: %s\n", queuePair->getValue(queuePair));
-
-        request->body->add(request->body, messagePair);
-        request->body->add(request->body, typePair);
-        request->body->add(request->body, queuePair);
+        if (messagePair != NULL) {
+            printf("extracted message: %s\n", messagePair->getValue(messagePair));
+            request->body->add(request->body, messagePair);
+        }
 
     }
     else if (strcmp(request->method, "GET") == 0) {
         
-        RequestPair *typePair = Request_extract_data(req, "type");
-        printf("extracted type: %s\n", typePair->getValue(typePair));
-        RequestPair *queuePair = Request_extract_data(req, "queue");
-        printf("extracted queue: %s\n", queuePair->getValue(queuePair));
         RequestPair *indexPair = Request_extract_data(req, "index");
         if (indexPair != NULL)
         {
@@ -45,8 +49,6 @@ Request *Request_parse(const char *req)
             request->body->add(request->body, indexPair);
         }
 
-        request->body->add(request->body, typePair);
-        request->body->add(request->body, queuePair);
 
     }
 
@@ -130,14 +132,18 @@ static char *Request_extract_method(const char *request)
 
     const unsigned short int requestLength = strlen(request);
     if (requestLength == 0) return NULL;
-    
+
     unsigned short int i = 0;
     const char delimiter = ' ';
-    char *method = (char *) mem_alloc(0);
+    char *method = NULL;
 
     while (request[i] != delimiter) 
     {
-        method = (char *) realloc(method, sizeof(char) * (i + 2));
+        size_t methodMemSize = sizeof(char) * (i + 2);
+        if (method == NULL)
+            method = (char *) mem_alloc(methodMemSize);
+        else
+            method = (char *) realloc(method, methodMemSize);
         method[i] = request[i];
         i++;
     }
@@ -149,9 +155,8 @@ static char *Request_extract_method(const char *request)
 
 void Request_destruct(Request *this)
 {
-    if (this == NULL) return;
-    this->body->destruct(this->body);
-    if (this->method != NULL)
-        mem_free(this->method);
+    if (this->body != NULL)
+        this->body->destruct(this->body);
+    mem_free(this->method);
     mem_free(this);
 }

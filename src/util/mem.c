@@ -16,7 +16,9 @@ void *mem_alloc(size_t size)
 
 void mem_free(void *p)
 {
-    free(p);
-    mem_freed++;
-    p = NULL;
+    if (p != NULL) {
+        free(p);
+        mem_freed++;
+        p = NULL;
+    }
 }

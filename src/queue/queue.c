@@ -54,6 +54,8 @@ void Queue_clear(Queue *this)
 
     if (_Queue.isEmpty(this)) return;
 
+    printf("Clearing queue...\n");
+
     int queueSize = _Queue.size(this);
     
     Node **asArray = (Node **) mem_alloc(sizeof(Node *) * queueSize);

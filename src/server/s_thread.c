@@ -30,7 +30,8 @@ void *socketThread(void *args)
     pthread_mutex_unlock(&lock);
     res->assemble(res);
 
-    Request_destruct(req);
+    if (req != NULL)
+        Request_destruct(req);
 
     // printf("Res:\n%s\n", res->get(res));
     // ssize_t send(int sockfd, const void *buf, size_t len, int flags);
@@ -38,7 +39,7 @@ void *socketThread(void *args)
     send(*newSocketPtr, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
 
-    _Queue.displayAll(queue); 
+    _Queue.displayAll(queue);
     printf("Exit socket thread.\n");
     close(*newSocketPtr);
 

@@ -40,7 +40,6 @@ typedef struct response
     void (*handle)(const void *this);
     void (*handleGET)(const void *this, char **msg);
     void (*handlePOST)(const void *this, char **msg);
-    // void (*handlePOST)(const void *this);
     void (*setHeaders)(const void *this);
     void (*setStatus)(const void *this, unsigned short int code);
     void (*destruct)(void *this);

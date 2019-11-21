@@ -25,9 +25,13 @@ static void Response_construct(void *this, Request *req, Queue *queue)
 {
 
     printf("Response constructor called.\n");
-    ((Response *)this)->req = req;
+    ((Response *)this)->status = NULL;
+    ((Response *)this)->headers = NULL;
+    ((Response *)this)->body = NULL;
     ((Response *)this)->queue = queue;
     ((Response *)this)->json_body = cJSON_CreateObject();
+    ((Response *)this)->req = req;
+    ((Response *)this)->res_string = NULL;
 
 }
 

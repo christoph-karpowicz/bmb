@@ -6,7 +6,7 @@ RequestBody *RequestBody_new()
     RequestBody *newRequestBody = (RequestBody *) mem_alloc(sizeof(RequestBody));
 
     // Assign properties.
-    newRequestBody->pairs = (RequestPair **) mem_alloc(0);
+    newRequestBody->pairs = NULL;
     newRequestBody->pairs_length = 0;
     
     // Assign methods.
@@ -25,7 +25,13 @@ void RequestBody_add(void *this, RequestPair *pair)
 
     RequestBody *self = (RequestBody *)this;
     self->pairs_length++;
-    self->pairs = (RequestPair **) realloc(self->pairs, self->pairs_length * sizeof(RequestPair *));
+    size_t pairsSize = self->pairs_length * sizeof(RequestPair *);
+    if (self->pairs == NULL) {
+        self->pairs = (RequestPair **) mem_alloc(pairsSize);
+    }
+    else {
+        self->pairs = (RequestPair **) realloc(self->pairs, pairsSize);
+    }
     self->pairs[self->pairs_length - 1] = pair;
     printf("%s added to request body... ", pair->getKey(pair));
 
