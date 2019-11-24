@@ -4,9 +4,9 @@ Request *Request_parse(const char *req)
 {
 
     printf("Parsing request... ");
-    Request *request = (Request *) mem_alloc(sizeof(Request));
-    request->method = NULL;
-    request->body = RequestBody_new();
+    Request *request =  (Request *) mem_alloc(sizeof(Request));
+    request->method =   NULL;
+    request->body =     RequestBody_new();
 
     char *method = Request_extract_method(req);
     printf("extracted method: %s... ", method); 

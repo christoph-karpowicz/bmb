@@ -25,13 +25,14 @@ static void Response_construct(void *this, Request *req, Queue *queue)
 {
 
     printf("Response constructor called.\n");
-    ((Response *)this)->status = NULL;
-    ((Response *)this)->headers = NULL;
-    ((Response *)this)->body = NULL;
-    ((Response *)this)->queue = queue;
-    ((Response *)this)->json_body = cJSON_CreateObject();
-    ((Response *)this)->req = req;
-    ((Response *)this)->res_string = NULL;
+    ((Response *)this)->status =        NULL;
+    ((Response *)this)->headers =       NULL;
+    ((Response *)this)->body =          NULL;
+    ((Response *)this)->queue =         queue;
+    ((Response *)this)->json_body =     cJSON_CreateObject();
+    ((Response *)this)->req =           req;
+    ((Response *)this)->error =         NULL;
+    ((Response *)this)->res_string =    NULL;
 
 }
 
@@ -66,52 +67,60 @@ static char *Response_get(const void *this)
 
 static void Response_handle(const void *this)
 {
-
     printf("Creating response... ");
-    Response *self = (Response *)this;
-    const Request *req = self->req;
-    Queue *queue = self->queue;
+
+    Response *self =        (Response *)this;
+    const Request *req =    self->req;
+    Queue *queue =          self->queue;
+    char *msg =             NULL;
+    cJSON *json_msg =       NULL;
+    bool handled = false;
 
     self->setHeaders(this);
     printf("headers added... ");
-    // printf("meth: %s\n", req->method);
 
     if (req == NULL)
     {
-        self->setStatus(this, 500);
-        self->body = (char *) mem_alloc(1);
-        strcpy(self->body, "");
-        return;
+        self->setStatus(this, 400);
+        msg = (char *) mem_alloc(1);
+        strcpy(msg, "");
+        goto parseToJSON;
     }
-
-    char *msg = NULL;
 
     // GET request.
     if (strcmp(req->method, "GET") == 0) {
-        self->handleGET(this, &msg);
+        handled = self->handleGET(this, &msg);
     }
     // POST request.
     else if (strcmp(req->method, "POST") == 0) {
-        self->handlePOST(this, &msg);
+        handled = self->handlePOST(this, &msg);
     }
-
-    // printf("#####msg: %s\n", msg);
 
     // ERROR - request type not found.
     if (msg == NULL) {
-        self->setStatus(this, 500);
+        self->setStatus(this, 400);
         msg = (char *) mem_alloc(1);
         strcpy(msg, "");
     }
 
-    cJSON *json_msg = NULL;
+    if (self->error != NULL) {
+        self->setStatus(this, 500);
+        msg = (char *) mem_alloc(strlen(self->error));
+        strcpy(msg, self->error);
+    }
+
+    parseToJSON: ;
     json_msg = cJSON_CreateString(msg);
     if (json_msg == NULL)
     {
-        // goto end;
+        exit(1);
     }
-    cJSON_AddItemToObject(self->json_body, "msg", json_msg);
+    cJSON_AddItemToObject(self->json_body, "data", json_msg);
     char *json_response_string = cJSON_Print(self->json_body);
+    if (json_response_string == NULL) {
+        exit(1);
+    }
+
     size_t body_len = strlen(json_response_string) + 1;
     self->body = (char *) mem_alloc(sizeof(char) * body_len);
     strcpy(self->body, json_response_string);
@@ -122,7 +131,7 @@ static void Response_handle(const void *this)
     
 }
 
-static void Response_handle_GET(const void *this, char **msg)
+static bool Response_handle_GET(const void *this, char **msg)
 {
     printf("recognized as GET... ");
 
@@ -131,18 +140,15 @@ static void Response_handle_GET(const void *this, char **msg)
     Queue *queue = self->queue;
 
     // Consume.
-    if (strcmp(req->body->get(req->body, "type"), "consume") == 0)
-    {
-        if (!_Queue.isEmpty(queue))
-        {
+    if (strcmp(req->body->get(req->body, "type"), "consume") == 0) {
+        if (!_Queue.isEmpty(queue)) {
             self->setStatus(this, 200);
             Node *node = _Queue.poll(queue);
             *msg = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
             strcpy(*msg, _Node.getMessage(node));
             _Node.destruct(node);
         }
-        else
-        {
+        else {
             self->setStatus(this, 200);
             char *queue_empty_msg = "Queue is empty.";
             *msg = (char *) mem_alloc(strlen(queue_empty_msg) + 1);
@@ -150,8 +156,7 @@ static void Response_handle_GET(const void *this, char **msg)
         }
     }
     // Return queue length.
-    else if (strcmp(req->body->get(req->body, "type"), "length") == 0)
-    {
+    else if (strcmp(req->body->get(req->body, "type"), "length") == 0) {
         self->setStatus(this, 200);
         const int queueSize = _Queue.size(queue);
         char *queueSize_str = intToString(queueSize);
@@ -160,29 +165,78 @@ static void Response_handle_GET(const void *this, char **msg)
         mem_free(queueSize_str);
     }
     // Peek queue Node at specified index.
-    else if (strcmp(req->body->get(req->body, "type"), "peek") == 0)
-    {
+    else if (strcmp(req->body->get(req->body, "type"), "get") == 0) {
         self->setStatus(this, 200);
         const int index = atoi(req->body->get(req->body, "index"));
         const int queueSize = _Queue.size(queue);
-        // printf("size: %d, i: %d\n", queueSize, index);
-        if (queueSize > index)
-        {
+        if (queueSize > index) {
             Node *node = _Queue.get(queue, index);
             *msg = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
             strcpy(*msg, _Node.getMessage(node));
         }
-        else 
-        {
+        else {
             char *res = "Node index out of range.";
             *msg = (char *) mem_alloc(strlen(res) + 1);
             strcpy(*msg, res);
         }
     }
+    // Peek all nodes.
+    else if (strcmp(req->body->get(req->body, "type"), "getAll") == 0) {
+        self->setStatus(this, 200);
+        const int queueSize = _Queue.size(queue);
+        if (queueSize > 0) {
+            cJSON *nodes =          cJSON_CreateObject();
+            cJSON *nodesArray =     NULL;
+            char *nodesString =     NULL;
+            
+            nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
+            if (nodesArray == NULL) {
+                self->setError(self, "Failed to add an array to JSON node list.");
+                return false;
+            }
+
+            for (size_t i = 0; i < queueSize; i++) {
+                Node *node =            _Queue.get(queue, i);
+                char *nodeMessage =     _Node.getMessage(node);
+                cJSON *nodeJSONObject = cJSON_CreateObject();
+                cJSON *message =        NULL;
+
+                if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
+                    self->setError(self, "Failed to add index to node JSON object.");
+                    return false;
+                }
+
+                if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
+                    self->setError(self, "Failed to add message to node JSON object.");
+                    return false;
+                }
+
+                cJSON_AddItemToArray(nodesArray, nodeJSONObject);
+            }
+
+            nodesString = cJSON_Print(nodes);
+            if (nodesString == NULL) {
+                self->setError(self, "Failed to print nodes.");
+                return false;
+            }
+            
+            *msg = (char *) mem_alloc(strlen(nodesString) + 1);
+            strcpy(*msg, nodesString);
+            cJSON_Delete(nodes);
+        }
+        else 
+        {
+            char *res = "Queue is empty.";
+            *msg = (char *) mem_alloc(strlen(res) + 1);
+            strcpy(*msg, res);
+        }
+    }
+
+    return true;
 
 }
 
-static void Response_handle_POST(const void *this, char **msg)
+static bool Response_handle_POST(const void *this, char **msg)
 {
     printf("recognized as POST... ");
 
@@ -200,13 +254,22 @@ static void Response_handle_POST(const void *this, char **msg)
     char *res = "Message produced.";
     *msg = (char *) mem_alloc(strlen(res) + 1);
     strcpy(*msg, res);
+
+    return true;
+}
+
+static void Response_set_error(const void *this, const char *msg)
+{
+    Response *self = (Response *)this;
+    self->error = (char *) mem_alloc(strlen(msg));
+    strcpy(self->error, msg);
 }
 
 static void Response_set_status(const void *this, unsigned short int code)
 {
 
-    Response *self = (Response *)this;
-    char *status_txt;
+    char                *status_txt;
+    Response *self =    (Response *)this;
 
     switch(code)
     {
@@ -215,6 +278,9 @@ static void Response_set_status(const void *this, unsigned short int code)
             break;
         case 204:
             status_txt = STATUS_204;
+            break;
+        case 400:
+            status_txt = STATUS_400;
             break;
         case 500:
             status_txt = STATUS_500;
@@ -280,6 +346,7 @@ static void Response_destruct(void *this)
     }
     mem_free(self->headers);
     mem_free(self->body);
+    mem_free(self->error);
     mem_free(self->res_string);
     cJSON_Delete(self->json_body);
     mem_free(this);

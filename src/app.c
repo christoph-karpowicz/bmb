@@ -59,15 +59,14 @@ int main() {
     else
         server.error("ERROR on listen attempt");
 
-    pthread_t tid[50];
-    int i = 0;
+    pthread_t   tid[50];
+    int         i = 0;
     
-    while(1)
-    {
- 
+    while(1) {
+        socket_thread_args args; 
+
         Server_accept(&server);
 
-        socket_thread_args args; 
         args.server = &server;
         args.time_start = getEpochMilis();
 
@@ -86,7 +85,6 @@ int main() {
             }
             i = 0;
         }
-        
     }
         
     return 0;
