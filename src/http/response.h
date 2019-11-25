@@ -34,6 +34,7 @@ typedef struct response
     char *body;
     Request *req;
     Queue *queue;
+    bool success;
     char *error;
     char *res_string;
 
@@ -46,6 +47,7 @@ typedef struct response
     void (*setError)(const void *this, const char *msg);
     void (*setHeaders)(const void *this);
     void (*setStatus)(const void *this, unsigned short int code);
+    void (*setSuccess)(const void *this, bool success);
     void (*destruct)(void *this);
     
 } Response;
@@ -69,6 +71,8 @@ static void Response_set_error(const void *this, const char *msg);
 static void Response_set_headers(const void *this);
 
 static void Response_set_status(const void *this, unsigned short int code);
+
+static void Response_set_success(const void *this, bool success);
 
 static void Response_destruct(void *this);
 

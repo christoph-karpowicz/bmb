@@ -14,6 +14,7 @@ Response *Response_new(Request *req, Queue *queue)
     newResponse->handlePOST = &Response_handle_POST;
     newResponse->setHeaders = &Response_set_headers;
     newResponse->setStatus = &Response_set_status;
+    newResponse->setSuccess = &Response_set_success;
     newResponse->destruct = &Response_destruct;
 
     newResponse->construct(newResponse, req, queue);
@@ -31,6 +32,7 @@ static void Response_construct(void *this, Request *req, Queue *queue)
     ((Response *)this)->queue =         queue;
     ((Response *)this)->json_body =     cJSON_CreateObject();
     ((Response *)this)->req =           req;
+    ((Response *)this)->success =       false;
     ((Response *)this)->error =         NULL;
     ((Response *)this)->res_string =    NULL;
 
@@ -74,6 +76,7 @@ static void Response_handle(const void *this)
     Queue *queue =          self->queue;
     char *msg =             NULL;
     cJSON *json_msg =       NULL;
+    cJSON *json_success =   NULL;
     bool handled = false;
 
     self->setHeaders(this);
@@ -110,6 +113,12 @@ static void Response_handle(const void *this)
     }
 
     parseToJSON: ;
+    json_success = cJSON_CreateBool(self->success);
+    if (json_success == NULL)
+    {
+        exit(1);
+    }
+    cJSON_AddItemToObject(self->json_body, "success", json_success);
     json_msg = cJSON_CreateString(msg);
     if (json_msg == NULL)
     {
@@ -135,101 +144,96 @@ static bool Response_handle_GET(const void *this, char **msg)
 {
     printf("recognized as GET... ");
 
-    Response *self = (Response *)this;
-    const Request *req = self->req;
-    Queue *queue = self->queue;
+    Response *self =        (Response *)this;
+    const Request *req =    self->req;
+    Queue *queue =          self->queue;
 
     // Consume.
     if (strcmp(req->body->get(req->body, "type"), "consume") == 0) {
         if (!_Queue.isEmpty(queue)) {
-            self->setStatus(this, 200);
             Node *node = _Queue.poll(queue);
             *msg = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
             strcpy(*msg, _Node.getMessage(node));
             _Node.destruct(node);
+            self->setSuccess(this, true);
         }
         else {
-            self->setStatus(this, 200);
             char *queue_empty_msg = "Queue is empty.";
             *msg = (char *) mem_alloc(strlen(queue_empty_msg) + 1);
             strcpy(*msg, queue_empty_msg);
         }
+        self->setStatus(this, 200);
     }
     // Return queue length.
     else if (strcmp(req->body->get(req->body, "type"), "length") == 0) {
-        self->setStatus(this, 200);
         const int queueSize = _Queue.size(queue);
         char *queueSize_str = intToString(queueSize);
         *msg = (char *) mem_alloc(strlen(queueSize_str) + 1);
         strcpy(*msg, queueSize_str);
         mem_free(queueSize_str);
+        self->setStatus(this, 200);
+        self->setSuccess(this, true);
     }
     // Peek queue Node at specified index.
     else if (strcmp(req->body->get(req->body, "type"), "get") == 0) {
-        self->setStatus(this, 200);
-        const int index = atoi(req->body->get(req->body, "index"));
-        const int queueSize = _Queue.size(queue);
+        const int index =       atoi(req->body->get(req->body, "index"));
+        const int queueSize =   _Queue.size(queue);
         if (queueSize > index) {
             Node *node = _Queue.get(queue, index);
             *msg = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
             strcpy(*msg, _Node.getMessage(node));
+            self->setSuccess(this, true);
         }
         else {
             char *res = "Node index out of range.";
             *msg = (char *) mem_alloc(strlen(res) + 1);
             strcpy(*msg, res);
         }
+        self->setStatus(this, 200);
     }
     // Peek all nodes.
     else if (strcmp(req->body->get(req->body, "type"), "getAll") == 0) {
+        const int queueSize =   _Queue.size(queue);
+        cJSON *nodes =          cJSON_CreateObject();
+        cJSON *nodesArray =     NULL;
+        char *nodesString =     NULL;
+        
+        nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
+        if (nodesArray == NULL) {
+            self->setError(self, "Failed to add an array to JSON node list.");
+            return false;
+        }
+
+        for (size_t i = 0; i < queueSize; i++) {
+            Node *node =            _Queue.get(queue, i);
+            char *nodeMessage =     _Node.getMessage(node);
+            cJSON *nodeJSONObject = cJSON_CreateObject();
+            cJSON *message =        NULL;
+
+            if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
+                self->setError(self, "Failed to add index to node JSON object.");
+                return false;
+            }
+
+            if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
+                self->setError(self, "Failed to add message to node JSON object.");
+                return false;
+            }
+
+            cJSON_AddItemToArray(nodesArray, nodeJSONObject);
+        }
+
+        nodesString = cJSON_Print(nodes);
+        if (nodesString == NULL) {
+            self->setError(self, "Failed to print nodes.");
+            return false;
+        }
+        
+        *msg = (char *) mem_alloc(strlen(nodesString) + 1);
+        strcpy(*msg, nodesString);
+        cJSON_Delete(nodes);
         self->setStatus(this, 200);
-        const int queueSize = _Queue.size(queue);
-        if (queueSize > 0) {
-            cJSON *nodes =          cJSON_CreateObject();
-            cJSON *nodesArray =     NULL;
-            char *nodesString =     NULL;
-            
-            nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
-            if (nodesArray == NULL) {
-                self->setError(self, "Failed to add an array to JSON node list.");
-                return false;
-            }
-
-            for (size_t i = 0; i < queueSize; i++) {
-                Node *node =            _Queue.get(queue, i);
-                char *nodeMessage =     _Node.getMessage(node);
-                cJSON *nodeJSONObject = cJSON_CreateObject();
-                cJSON *message =        NULL;
-
-                if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
-                    self->setError(self, "Failed to add index to node JSON object.");
-                    return false;
-                }
-
-                if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
-                    self->setError(self, "Failed to add message to node JSON object.");
-                    return false;
-                }
-
-                cJSON_AddItemToArray(nodesArray, nodeJSONObject);
-            }
-
-            nodesString = cJSON_Print(nodes);
-            if (nodesString == NULL) {
-                self->setError(self, "Failed to print nodes.");
-                return false;
-            }
-            
-            *msg = (char *) mem_alloc(strlen(nodesString) + 1);
-            strcpy(*msg, nodesString);
-            cJSON_Delete(nodes);
-        }
-        else 
-        {
-            char *res = "Queue is empty.";
-            *msg = (char *) mem_alloc(strlen(res) + 1);
-            strcpy(*msg, res);
-        }
+        self->setSuccess(this, true);
     }
 
     return true;
@@ -244,8 +248,6 @@ static bool Response_handle_POST(const void *this, char **msg)
     const Request *req = self->req;
     Queue *queue = self->queue;
 
-    self->setStatus(this, 200);
-    
     // Produce.
     Node *newNode = Node_new();
     _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
@@ -254,6 +256,9 @@ static bool Response_handle_POST(const void *this, char **msg)
     char *res = "Message produced.";
     *msg = (char *) mem_alloc(strlen(res) + 1);
     strcpy(*msg, res);
+    
+    self->setStatus(this, 200);
+    self->setSuccess(this, true);
 
     return true;
 }
@@ -263,38 +268,6 @@ static void Response_set_error(const void *this, const char *msg)
     Response *self = (Response *)this;
     self->error = (char *) mem_alloc(strlen(msg));
     strcpy(self->error, msg);
-}
-
-static void Response_set_status(const void *this, unsigned short int code)
-{
-
-    char                *status_txt;
-    Response *self =    (Response *)this;
-
-    switch(code)
-    {
-        case 200:
-            status_txt = STATUS_200;
-            break;
-        case 204:
-            status_txt = STATUS_204;
-            break;
-        case 400:
-            status_txt = STATUS_400;
-            break;
-        case 500:
-            status_txt = STATUS_500;
-            break;
-        default:
-            status_txt = STATUS_200;
-    }
-    
-    self->status = (char *) mem_alloc(strlen(PROTOCOL) + strlen(status_txt) + 2);
-    strcpy(self->status, PROTOCOL);
-    strcat(self->status, " ");
-    strcat(self->status, status_txt);
-    printf("status %d set... ", code);
-   
 }
 
 static void Response_set_headers(const void *this)
@@ -335,6 +308,43 @@ static void Response_set_headers(const void *this)
     strcpy(self->headers[4], date);
     mem_free(date);
 
+}
+
+static void Response_set_status(const void *this, unsigned short int code)
+{
+
+    char                *status_txt;
+    Response *self =    (Response *)this;
+
+    switch(code)
+    {
+        case 200:
+            status_txt = STATUS_200;
+            break;
+        case 204:
+            status_txt = STATUS_204;
+            break;
+        case 400:
+            status_txt = STATUS_400;
+            break;
+        case 500:
+            status_txt = STATUS_500;
+            break;
+        default:
+            status_txt = STATUS_200;
+    }
+    
+    self->status = (char *) mem_alloc(strlen(PROTOCOL) + strlen(status_txt) + 2);
+    strcpy(self->status, PROTOCOL);
+    strcat(self->status, " ");
+    strcat(self->status, status_txt);
+    printf("status %d set... ", code);
+   
+}
+
+static void Response_set_success(const void *this, bool success)
+{
+    ((Response *)this)->success = success;
 }
 
 static void Response_destruct(void *this)

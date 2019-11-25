@@ -29,7 +29,7 @@ void *socketThread(void *args)
     res->assemble(res);
 
     // if (req == NULL) {
-        printf("============\nReq:\n%s\n==========\n", msg);
+        // printf("============\nReq:\n%s\n==========\n", msg);
         printf("============\nRes:\n%s\n==========\n", res->get(res));
     // }
     if (req != NULL)
