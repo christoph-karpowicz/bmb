@@ -10,10 +10,8 @@
 #include <string.h>
 
 #include "server.h"
-#include "../queue/queue.h"
-#include "../queue/queue_node.h"
-#include "../http/request.h"
-#include "../http/response.h"
+#include "../http/request/request.h"
+#include "../http/response/response.h"
 #include "../util/util.h"
 
 extern pthread_mutex_t lock;

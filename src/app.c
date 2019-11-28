@@ -9,10 +9,10 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include "server/server.h"
-#include "server/s_thread.h"
 #include "queue/queue.h"
 #include "queue/queue_node.h"
+#include "server/server.h"
+#include "server/s_thread.h"
 #include "util/util.h"
 #include "util/mem.h"
 
@@ -29,8 +29,8 @@ void close_signal_handler(int sig)
     printf("Do you really want to quit? [y/n]");
     c = getchar();
     if (c == 'y' || c == 'Y') {
-        _Queue.clear(server_ptr->queue);
-        _Queue.destruct(server_ptr->queue);
+        _Queue.clear(server_ptr->broker->queue);
+        _Queue.destruct(server_ptr->broker->queue);
         printf("* request count: %d\n", server_ptr->requestCounter);
         printf("* memory allocations: %d\n", mem_allocated);
         printf("* memory freed: %d\n", mem_freed);

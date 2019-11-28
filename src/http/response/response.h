@@ -8,11 +8,12 @@
 #include <stdbool.h>
 #include <cjson/cJSON.h>
 
-#include "../queue/queue.h"
-#include "../queue/queue_node.h"
-#include "request.h"
-#include "../util/util.h"
-#include "../util/mem.h"
+#include "../../queue/queue.h"
+#include "../../queue/queue_node.h"
+#include "../../broker/broker.h"
+#include "../request/request.h"
+#include "../../util/util.h"
+#include "../../util/mem.h"
 
 #define PROTOCOL "HTTP/1.1"
 #define STATUS_200 "200 OK"
@@ -33,17 +34,17 @@ typedef struct response
     cJSON *json_body;
     char *body;
     Request *req;
-    Queue *queue;
+    Broker *broker;
     bool success;
     char *error;
     char *res_string;
 
-    void (*construct)(void *this, Request *req, Queue *queue);
+    void (*construct)(void *this, Request *req, Broker *broker);
     void (*assemble)(const void *this);
     char *(*get)(const void *this);
     void (*handle)(const void *this);
     bool (*handleGET)(const void *this, char **msg);
-    bool (*handlePOST)(const void *this, char **msg);
+    struct broker_response (*handlePOST)(const void *this, char **msg);
     void (*setError)(const void *this, const char *msg);
     void (*setHeaders)(const void *this);
     void (*setStatus)(const void *this, unsigned short int code);
@@ -52,9 +53,9 @@ typedef struct response
     
 } Response;
 
-Response *Response_new(Request *req, Queue *queue);
+Response *Response_new(Request *req, Broker *broker);
 
-static void Response_construct(void *this, Request *req, Queue *queue);
+static void Response_construct(void *this, Request *req, Broker *broker);
 
 static void Response_assemble(const void *this);
 
@@ -64,7 +65,7 @@ static void Response_handle(const void *this);
 
 static bool Response_handle_GET(const void *this, char **msg);
 
-static bool Response_handle_POST(const void *this, char **msg);
+static struct broker_response Response_handle_POST(const void *this, char **msg);
 
 static void Response_set_error(const void *this, const char *msg);
 

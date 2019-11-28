@@ -60,8 +60,8 @@ void Server_init(Server *s) {
     //Set all bits of the padding field to 0 
     memset(s->serverAddr.sin_zero, '\0', sizeof s->serverAddr.sin_zero);
 
-    // Create queue.
-    s->queue = Queue_new();
+    // Create broker.
+    s->broker = broker_init();
 
     // Start request counter.
     s->requestCounter = 0;

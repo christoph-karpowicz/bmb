@@ -8,7 +8,6 @@ void *socketThread(void *args)
 
     socket_thread_args *arguments = (socket_thread_args*)args;
     Server *server =                arguments->server;
-    Queue *queue =                  server->queue;
     int *newSocketPtr =             &server->newSocket;
     char                            msg[CLIENT_MESSAGE_SIZE];
 
@@ -19,7 +18,7 @@ void *socketThread(void *args)
     // printf("Req:\n%s\n", msg);
     Request *req = Request_parse(msg);
 
-    Response *res = Response_new(req, queue);
+    Response *res = Response_new(req, server->broker);
     
     // Lock thread during IO operatins on th queue.
     pthread_mutex_lock(&lock);
@@ -38,7 +37,7 @@ void *socketThread(void *args)
     send(*newSocketPtr, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
 
-    _Queue.displayAll(queue);
+    _Queue.displayAll(server->broker->queue);
     close(*newSocketPtr);
 
     printf("Exit socket thread.\n");

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "../queue/queue.h"
+#include "../broker/broker.h"
 #include "../util/mem.h"
 
 #define PORT 8080
@@ -25,7 +25,7 @@ typedef struct Server {
     struct sockaddr_in serverAddr;
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;
-    Queue *queue;
+    Broker *broker;
     int requestCounter;
     
     // Methods.

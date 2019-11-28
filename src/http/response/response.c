@@ -1,6 +1,6 @@
 #include "response.h"
 
-Response *Response_new(Request *req, Queue *queue) 
+Response *Response_new(Request *req, Broker *broker) 
 {
 
     Response *newResponse = (Response *) mem_alloc(sizeof(Response));
@@ -17,24 +17,24 @@ Response *Response_new(Request *req, Queue *queue)
     newResponse->setSuccess = &Response_set_success;
     newResponse->destruct = &Response_destruct;
 
-    newResponse->construct(newResponse, req, queue);
+    newResponse->construct(newResponse, req, broker);
     return newResponse;
 
 }
 
-static void Response_construct(void *this, Request *req, Queue *queue) 
+static void Response_construct(void *this, Request *req, Broker *broker) 
 {
 
     printf("Response constructor called.\n");
-    ((Response *)this)->status =        NULL;
-    ((Response *)this)->headers =       NULL;
-    ((Response *)this)->body =          NULL;
-    ((Response *)this)->queue =         queue;
-    ((Response *)this)->json_body =     cJSON_CreateObject();
-    ((Response *)this)->req =           req;
-    ((Response *)this)->success =       false;
-    ((Response *)this)->error =         NULL;
-    ((Response *)this)->res_string =    NULL;
+    ((Response *)this)->status      = NULL;
+    ((Response *)this)->headers     = NULL;
+    ((Response *)this)->body        = NULL;
+    ((Response *)this)->broker      = broker;
+    ((Response *)this)->json_body   = cJSON_CreateObject();
+    ((Response *)this)->req         = req;
+    ((Response *)this)->success     = false;
+    ((Response *)this)->error       = NULL;
+    ((Response *)this)->res_string  = NULL;
 
 }
 
@@ -71,13 +71,14 @@ static void Response_handle(const void *this)
 {
     printf("Creating response... ");
 
-    Response *self =        (Response *)this;
-    const Request *req =    self->req;
-    Queue *queue =          self->queue;
-    char *msg =             NULL;
-    cJSON *json_msg =       NULL;
-    cJSON *json_success =   NULL;
-    bool handled = false;
+    Response *self          = (Response *)this;
+    const Request *req      = self->req;
+    Queue *queue            = self->broker->queue;
+    char *msg               = NULL;
+    cJSON *json_msg         = NULL;
+    cJSON *json_success     = NULL;
+    bool handled            = false;
+    struct broker_response broker_res;
 
     self->setHeaders(this);
     printf("headers added... ");
@@ -91,40 +92,17 @@ static void Response_handle(const void *this)
     }
 
     // GET request.
-    if (strcmp(req->method, "GET") == 0) {
-        handled = self->handleGET(this, &msg);
-    }
+    // if (strcmp(req->method, "GET") == 0) {
+    //     handled = self->handleGET(this, &msg);
+    // }
     // POST request.
     else if (strcmp(req->method, "POST") == 0) {
-        handled = self->handlePOST(this, &msg);
-    }
-
-    // ERROR - request type not found.
-    if (msg == NULL) {
-        self->setStatus(this, 400);
-        msg = (char *) mem_alloc(1);
-        strcpy(msg, "");
-    }
-
-    if (self->error != NULL) {
-        self->setStatus(this, 500);
-        msg = (char *) mem_alloc(strlen(self->error));
-        strcpy(msg, self->error);
+        broker_res = self->handlePOST(this, &msg);
     }
 
     parseToJSON: ;
-    json_success = cJSON_CreateBool(self->success);
-    if (json_success == NULL)
-    {
-        exit(1);
-    }
-    cJSON_AddItemToObject(self->json_body, "success", json_success);
-    json_msg = cJSON_CreateString(msg);
-    if (json_msg == NULL)
-    {
-        exit(1);
-    }
-    cJSON_AddItemToObject(self->json_body, "data", json_msg);
+    cJSON_AddItemToObject(self->json_body, "success", broker_res.success);
+    cJSON_AddItemToObject(self->json_body, "data", broker_res.payload);
     char *json_response_string = cJSON_Print(self->json_body);
     if (json_response_string == NULL) {
         exit(1);
@@ -134,7 +112,42 @@ static void Response_handle(const void *this)
     self->body = (char *) mem_alloc(sizeof(char) * body_len);
     strcpy(self->body, json_response_string);
 
-    mem_free(msg);
+    // ERROR - request type not found.
+    // if (msg == NULL) {
+    //     self->setStatus(this, 400);
+    //     msg = (char *) mem_alloc(1);
+    //     strcpy(msg, "");
+    // }
+
+    // if (self->error != NULL) {
+    //     self->setStatus(this, 500);
+    //     msg = (char *) mem_alloc(strlen(self->error));
+    //     strcpy(msg, self->error);
+    // }
+
+    // parseToJSON: ;
+    // json_success = cJSON_CreateBool(self->success);
+    // if (json_success == NULL)
+    // {
+    //     exit(1);
+    // }
+    // cJSON_AddItemToObject(self->json_body, "success", json_success);
+    // json_msg = cJSON_CreateString(msg);
+    // if (json_msg == NULL)
+    // {
+    //     exit(1);
+    // }
+    // cJSON_AddItemToObject(self->json_body, "data", json_msg);
+    // char *json_response_string = cJSON_Print(self->json_body);
+    // if (json_response_string == NULL) {
+    //     exit(1);
+    // }
+
+    // size_t body_len = strlen(json_response_string) + 1;
+    // self->body = (char *) mem_alloc(sizeof(char) * body_len);
+    // strcpy(self->body, json_response_string);
+
+    // mem_free(msg);
 
     printf("body added... ");
     
@@ -146,7 +159,7 @@ static bool Response_handle_GET(const void *this, char **msg)
 
     Response *self =        (Response *)this;
     const Request *req =    self->req;
-    Queue *queue =          self->queue;
+    Queue *queue =          self->broker->queue;
 
     // Consume.
     if (strcmp(req->body->get(req->body, "type"), "consume") == 0) {
@@ -240,27 +253,34 @@ static bool Response_handle_GET(const void *this, char **msg)
 
 }
 
-static bool Response_handle_POST(const void *this, char **msg)
+static struct broker_response Response_handle_POST(const void *this, char **msg)
 {
     printf("recognized as POST... ");
+    Response *self      = (Response *)this;
+    const Request *req  = self->req;
+    struct broker_request broker_req;
+    broker_req.type     = req->body->get(req->body, "type");
+    broker_req.queue_id = atoi(req->body->get(req->body, "queue"));
+    broker_req.index    = atoi(req->body->get(req->body, "index"));
+    broker_req.msg      = req->body->get(req->body, "message");
 
-    Response *self = (Response *)this;
-    const Request *req = self->req;
-    Queue *queue = self->queue;
+    struct broker_response res = broker_dispatch(self->broker, broker_req);
 
-    // Produce.
-    Node *newNode = Node_new();
-    _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
-    _Queue.add(queue, newNode);
+    // Queue *queue = self->broker->queue;
 
-    char *res = "Message produced.";
-    *msg = (char *) mem_alloc(strlen(res) + 1);
-    strcpy(*msg, res);
+    // // Produce.
+    // Node *newNode = Node_new();
+    // _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
+    // _Queue.add(queue, newNode);
+
+    // char *res = "Message produced.";
+    // *msg = (char *) mem_alloc(strlen(res) + 1);
+    // strcpy(*msg, res);
     
     self->setStatus(this, 200);
     self->setSuccess(this, true);
 
-    return true;
+    return res;
 }
 
 static void Response_set_error(const void *this, const char *msg)
