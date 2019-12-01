@@ -92,9 +92,9 @@ static void Response_handle(const void *this)
     }
 
     // GET request.
-    // if (strcmp(req->method, "GET") == 0) {
-    //     handled = self->handleGET(this, &msg);
-    // }
+    if (strcmp(req->method, "GET") == 0) {
+        broker_res = self->handleGET(this, &msg);
+    }
     // POST request.
     else if (strcmp(req->method, "POST") == 0) {
         broker_res = self->handlePOST(this, &msg);
@@ -102,7 +102,7 @@ static void Response_handle(const void *this)
 
     parseToJSON: ;
     cJSON_AddItemToObject(self->json_body, "success", broker_res.success);
-    cJSON_AddItemToObject(self->json_body, "data", broker_res.payload);
+    cJSON_AddItemToObject(self->json_body, "payload", broker_res.payload);
     char *json_response_string = cJSON_Print(self->json_body);
     if (json_response_string == NULL) {
         exit(1);
@@ -153,103 +153,71 @@ static void Response_handle(const void *this)
     
 }
 
-static bool Response_handle_GET(const void *this, char **msg)
+static struct broker_response Response_handle_GET(const void *this, char **msg)
 {
     printf("recognized as GET... ");
 
-    Response *self =        (Response *)this;
-    const Request *req =    self->req;
-    Queue *queue =          self->broker->queue;
+    Response *self          = (Response *)this;
+    const Request *req      = self->req;
+    struct broker_request   broker_req;
+    struct broker_response  res;
 
-    // Consume.
-    if (strcmp(req->body->get(req->body, "type"), "consume") == 0) {
-        if (!_Queue.isEmpty(queue)) {
-            Node *node = _Queue.poll(queue);
-            *msg = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
-            strcpy(*msg, _Node.getMessage(node));
-            _Node.destruct(node);
-            self->setSuccess(this, true);
-        }
-        else {
-            char *queue_empty_msg = "Queue is empty.";
-            *msg = (char *) mem_alloc(strlen(queue_empty_msg) + 1);
-            strcpy(*msg, queue_empty_msg);
-        }
-        self->setStatus(this, 200);
-    }
-    // Return queue length.
-    else if (strcmp(req->body->get(req->body, "type"), "length") == 0) {
-        const int queueSize = _Queue.size(queue);
-        char *queueSize_str = intToString(queueSize);
-        *msg = (char *) mem_alloc(strlen(queueSize_str) + 1);
-        strcpy(*msg, queueSize_str);
-        mem_free(queueSize_str);
-        self->setStatus(this, 200);
-        self->setSuccess(this, true);
-    }
-    // Peek queue Node at specified index.
-    else if (strcmp(req->body->get(req->body, "type"), "get") == 0) {
-        const int index =       atoi(req->body->get(req->body, "index"));
-        const int queueSize =   _Queue.size(queue);
-        if (queueSize > index) {
-            Node *node = _Queue.get(queue, index);
-            *msg = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
-            strcpy(*msg, _Node.getMessage(node));
-            self->setSuccess(this, true);
-        }
-        else {
-            char *res = "Node index out of range.";
-            *msg = (char *) mem_alloc(strlen(res) + 1);
-            strcpy(*msg, res);
-        }
-        self->setStatus(this, 200);
-    }
-    // Peek all nodes.
-    else if (strcmp(req->body->get(req->body, "type"), "getAll") == 0) {
-        const int queueSize =   _Queue.size(queue);
-        cJSON *nodes =          cJSON_CreateObject();
-        cJSON *nodesArray =     NULL;
-        char *nodesString =     NULL;
+    broker_req.type     = req->body->get(req->body, "type");
+    broker_req.queue_id = atoi(req->body->get(req->body, "queue"));
+    broker_req.index    = atoi(req->body->get(req->body, "index"));
+    broker_req.msg      = req->body->get(req->body, "message");
+
+    res = broker_dispatch(self->broker, broker_req);
+
+    // // Peek all nodes.
+    // else if (strcmp(req->body->get(req->body, "type"), "getAll") == 0) {
+    //     const int queueSize =   _Queue.size(queue);
+    //     cJSON *nodes =          cJSON_CreateObject();
+    //     cJSON *nodesArray =     NULL;
+    //     char *nodesString =     NULL;
         
-        nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
-        if (nodesArray == NULL) {
-            self->setError(self, "Failed to add an array to JSON node list.");
-            return false;
-        }
+    //     nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
+    //     if (nodesArray == NULL) {
+    //         self->setError(self, "Failed to add an array to JSON node list.");
+    //         return false;
+    //     }
 
-        for (size_t i = 0; i < queueSize; i++) {
-            Node *node =            _Queue.get(queue, i);
-            char *nodeMessage =     _Node.getMessage(node);
-            cJSON *nodeJSONObject = cJSON_CreateObject();
-            cJSON *message =        NULL;
+    //     for (size_t i = 0; i < queueSize; i++) {
+    //         Node *node =            _Queue.get(queue, i);
+    //         char *nodeMessage =     _Node.getMessage(node);
+    //         cJSON *nodeJSONObject = cJSON_CreateObject();
+    //         cJSON *message =        NULL;
 
-            if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
-                self->setError(self, "Failed to add index to node JSON object.");
-                return false;
-            }
+    //         if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
+    //             self->setError(self, "Failed to add index to node JSON object.");
+    //             return false;
+    //         }
 
-            if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
-                self->setError(self, "Failed to add message to node JSON object.");
-                return false;
-            }
+    //         if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
+    //             self->setError(self, "Failed to add message to node JSON object.");
+    //             return false;
+    //         }
 
-            cJSON_AddItemToArray(nodesArray, nodeJSONObject);
-        }
+    //         cJSON_AddItemToArray(nodesArray, nodeJSONObject);
+    //     }
 
-        nodesString = cJSON_Print(nodes);
-        if (nodesString == NULL) {
-            self->setError(self, "Failed to print nodes.");
-            return false;
-        }
+    //     nodesString = cJSON_Print(nodes);
+    //     if (nodesString == NULL) {
+    //         self->setError(self, "Failed to print nodes.");
+    //         return false;
+    //     }
         
-        *msg = (char *) mem_alloc(strlen(nodesString) + 1);
-        strcpy(*msg, nodesString);
-        cJSON_Delete(nodes);
-        self->setStatus(this, 200);
-        self->setSuccess(this, true);
-    }
+    //     *msg = (char *) mem_alloc(strlen(nodesString) + 1);
+    //     strcpy(*msg, nodesString);
+    //     cJSON_Delete(nodes);
+    //     self->setStatus(this, 200);
+    //     self->setSuccess(this, true);
+    // }
 
-    return true;
+    self->setStatus(this, 200);
+    self->setSuccess(this, true);
+
+    return res;
 
 }
 
@@ -266,17 +234,6 @@ static struct broker_response Response_handle_POST(const void *this, char **msg)
 
     struct broker_response res = broker_dispatch(self->broker, broker_req);
 
-    // Queue *queue = self->broker->queue;
-
-    // // Produce.
-    // Node *newNode = Node_new();
-    // _Node.setMessage(newNode, req->body->get(req->body, "message"), strlen(req->body->get(req->body, "message")));
-    // _Queue.add(queue, newNode);
-
-    // char *res = "Message produced.";
-    // *msg = (char *) mem_alloc(strlen(res) + 1);
-    // strcpy(*msg, res);
-    
     self->setStatus(this, 200);
     self->setSuccess(this, true);
 

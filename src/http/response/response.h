@@ -43,7 +43,7 @@ typedef struct response
     void (*assemble)(const void *this);
     char *(*get)(const void *this);
     void (*handle)(const void *this);
-    bool (*handleGET)(const void *this, char **msg);
+    struct broker_response (*handleGET)(const void *this, char **msg);
     struct broker_response (*handlePOST)(const void *this, char **msg);
     void (*setError)(const void *this, const char *msg);
     void (*setHeaders)(const void *this);
@@ -63,7 +63,7 @@ static char *Response_get(const void *this);
 
 static void Response_handle(const void *this);
 
-static bool Response_handle_GET(const void *this, char **msg);
+static struct broker_response Response_handle_GET(const void *this, char **msg);
 
 static struct broker_response Response_handle_POST(const void *this, char **msg);
 

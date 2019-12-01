@@ -9,6 +9,7 @@
 
 #include "../queue/queue.h"
 #include "../queue/queue_node.h"
+#include "../util/util.h"
 
 typedef struct {
     Queue *queue;
@@ -30,8 +31,14 @@ Broker *broker_init();
 
 struct broker_response broker_dispatch(Broker *this, struct broker_request broker_req);
 
-struct broker_response consume(Broker *this);
+static struct broker_response consume(Broker *this);
 
-struct broker_response produce(Broker *this, struct broker_request req);
+static struct broker_response create_response(bool success, char *message, char *data);
+
+static struct broker_response get(Broker *this, struct broker_request req);
+
+static struct broker_response length(Broker *this, struct broker_request req);
+
+static struct broker_response produce(Broker *this, struct broker_request req);
 
 #endif
