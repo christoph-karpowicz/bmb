@@ -23,8 +23,10 @@ struct broker_request {
 };
 
 struct broker_response {
-    cJSON *success;
-    cJSON *payload;
+    unsigned short int  code;
+    char                *errorMessage;
+    cJSON               *success;
+    cJSON               *payload;
 };
 
 Broker *broker_init();
@@ -36,6 +38,8 @@ static struct broker_response consume(Broker *this);
 static struct broker_response create_response(bool success, char *message, char *data);
 
 static struct broker_response get(Broker *this, struct broker_request req);
+
+static struct broker_response getAll(Broker *this, struct broker_request req);
 
 static struct broker_response length(Broker *this, struct broker_request req);
 

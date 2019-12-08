@@ -23,6 +23,9 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
     else if (strcmp(broker_req.type, "get") == 0) {
         res = get(this, broker_req);
     }
+    else if (strcmp(broker_req.type, "getAll") == 0) {
+        res = getAll(this, broker_req);
+    }
 
     return res;
 }
@@ -31,12 +34,11 @@ static struct broker_response consume(Broker *this)
 {
     struct broker_response res;
     bool success = false;
-    char *msg;
-    char *data = NULL;
+    char *msg   = NULL;
+    char *data  = NULL;
 
     if (!_Queue.isEmpty(this->queue)) {
         Node *node = _Queue.poll(this->queue);
-        msg = NULL;
         data = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
         strcpy(data, _Node.getMessage(node));
         _Node.destruct(node);
@@ -97,14 +99,13 @@ static struct broker_response create_response(bool success, char *message, char 
 static struct broker_response get(Broker *this, struct broker_request req)
 {
     struct broker_response res;
-    bool success = false;
-    char *msg;
-    char *data = NULL;
+    bool success    = false;
+    char *msg       = NULL;
+    char *data      = NULL;
 
     const int queueSize =   _Queue.size(this->queue);
     if (queueSize > req.index) {
         Node *node = _Queue.get(this->queue, req.index);
-        msg = NULL;
         data = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
         strcpy(data, _Node.getMessage(node));
         success = true;
@@ -120,10 +121,66 @@ static struct broker_response get(Broker *this, struct broker_request req)
     return res;
 }
 
+static struct broker_response getAll(Broker *this, struct broker_request req)
+{
+    struct broker_response res;
+    char *msg               = NULL;
+    bool success            = false;
+    char *data              = NULL;
+    const int queueSize     = _Queue.size(this->queue);
+    cJSON *nodes            = cJSON_CreateObject();
+    cJSON *nodesArray       = NULL;
+    char *nodesString       = NULL;
+    
+    nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
+    if (nodesArray == NULL) {
+        exit(1);
+        // self->setError(self, "Failed to add an array to JSON node list.");
+        // return false;
+    }
+
+    for (size_t i = 0; i < queueSize; i++) {
+        Node *node              = _Queue.get(this->queue, i);
+        char *nodeMessage       = _Node.getMessage(node);
+        cJSON *nodeJSONObject   = cJSON_CreateObject();
+        cJSON *message          = NULL;
+
+        if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
+            exit(1);
+            // self->setError(self, "Failed to add index to node JSON object.");
+            // return false;
+        }
+
+        if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
+            exit(1);
+            // self->setError(self, "Failed to add message to node JSON object.");
+            // return false;
+        }
+
+        cJSON_AddItemToArray(nodesArray, nodeJSONObject);
+    }
+
+    nodesString = cJSON_Print(nodes);
+    if (nodesString == NULL) {
+        exit(1);
+        // self->setError(self, "Failed to print nodes.");
+        // return false;
+    }
+
+    data = (char *) mem_alloc(strlen(nodesString) + 1);
+    strcpy(data, nodesString);
+    
+    res = create_response(success, msg, data);
+
+    mem_free(data);
+
+    return res;
+}
+
 static struct broker_response length(Broker *this, struct broker_request req)
 {
     struct broker_response  res;
-    char                    *data;
+    char *data              = NULL;
     bool success            = true;
     const int queueSize     = _Queue.size(this->queue);
     char *queueSize_str     = intToString(queueSize);
@@ -144,7 +201,7 @@ static struct broker_response produce(Broker *this, struct broker_request req)
     struct broker_response res;
     bool success        = true;
     Node *newNode       = Node_new();
-    char *msg;
+    char *msg           = NULL;
     _Node.setMessage(newNode, req.msg, strlen(req.msg));
     _Queue.add(this->queue, newNode);
 
