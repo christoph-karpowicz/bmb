@@ -44,6 +44,7 @@ typedef struct response
     char *(*get)(const void *this);
     void (*handle)(const void *this);
     struct broker_response (*getResponse)(const void *this);
+    void (*setError)(const void *this, char *errorMessage);
     void (*setHeaders)(const void *this);
     void (*setStatus)(const void *this, unsigned short int code);
     void (*destruct)(void *this);
@@ -61,6 +62,8 @@ static char *Response_get(const void *this);
 static void Response_handle(const void *this);
 
 static struct broker_response Response_get_response(const void *this);
+
+static void Response_set_error(const void *this, char *errorMessage);
 
 static void Response_set_headers(const void *this);
 

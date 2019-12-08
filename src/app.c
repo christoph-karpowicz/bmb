@@ -32,6 +32,7 @@ void close_signal_handler(int sig)
         _Queue.clear(server_ptr->broker->queue);
         _Queue.destruct(server_ptr->broker->queue);
         printf("* request count: %d\n", server_ptr->requestCounter);
+        Server_destruct(server_ptr);
         printf("* memory allocations: %d\n", mem_allocated);
         printf("* memory freed: %d\n", mem_freed);
         printf("========\n");
@@ -39,7 +40,7 @@ void close_signal_handler(int sig)
     }
     else
         signal(SIGINT, close_signal_handler);
-    getchar();
+    // getchar();
 }
 
 int main() {

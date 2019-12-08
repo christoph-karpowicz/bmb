@@ -35,7 +35,7 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
 
 static struct broker_response consume(Broker *this);
 
-static struct broker_response create_response(bool success, char *message, char *data);
+static struct broker_response create_response(bool success, unsigned short int code, char *message, char *data, char *errorMessage);
 
 static struct broker_response get(Broker *this, struct broker_request req);
 

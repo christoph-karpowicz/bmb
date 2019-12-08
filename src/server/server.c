@@ -67,3 +67,7 @@ void Server_init(Server *s) {
     s->requestCounter = 0;
 
 }
+
+void Server_destruct(Server *s) {
+    mem_free(s->broker);    
+}

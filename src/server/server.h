@@ -48,6 +48,8 @@ typedef struct socket_thread_arguments {
     unsigned long long time_start;
 } socket_thread_args;
 
+void Server_destruct(Server *s);
+
 void Server_error(const char *msg);
 
 #endif

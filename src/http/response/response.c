@@ -11,6 +11,7 @@ Response *Response_new(Request *req, Broker *broker)
     newResponse->get = &Response_get;
     newResponse->getResponse = &Response_get_response;
     newResponse->handle = &Response_handle;
+    newResponse->setError = &Response_set_error;
     newResponse->setHeaders = &Response_set_headers;
     newResponse->setStatus = &Response_set_status;
     newResponse->destruct = &Response_destruct;
@@ -77,8 +78,6 @@ static struct broker_response Response_get_response(const void *this)
 
     res = broker_dispatch(self->broker, broker_req);
 
-    self->setStatus(this, 200);
-
     return res;
 
 }
@@ -97,20 +96,22 @@ static void Response_handle(const void *this)
     if (req == NULL)
     {
         self->setStatus(this, 400);
-        goto parseResponse;
+        goto errorResponse;
     }
 
     printf("recognized as %s... ", req->method);
 
-    // GET request.
+    // Create response.
     broker_res = self->getResponse(this);
 
-    parseResponse: ;
+    self->setStatus(this, broker_res.code);
+
     cJSON_AddItemToObject(self->json_body, "success", broker_res.success);
     cJSON_AddItemToObject(self->json_body, "payload", broker_res.payload);
     char *json_response_string = cJSON_Print(self->json_body);
     if (json_response_string == NULL) {
-        exit(1);
+        self->setStatus(this, 500);
+        goto errorResponse;
     }
 
     size_t body_len = strlen(json_response_string) + 1;
@@ -118,7 +119,24 @@ static void Response_handle(const void *this)
     strcpy(self->body, json_response_string);
 
     printf("body added... ");
+
+    return;
     
+    errorResponse:
+    printf("error response added... ");
+    self->setError(self, "Failed to create final JSON response.");
+    
+    return;
+}
+
+static void Response_set_error(const void *this, char *errorMessage)
+{
+    Response *self  = (Response *)this;
+    size_t body_len = strlen(errorMessage) + 1;
+
+    self->body = (char *) mem_alloc(sizeof(char) * body_len);
+
+    strcpy(self->body, errorMessage);
 }
 
 static void Response_set_headers(const void *this)
@@ -202,7 +220,6 @@ static void Response_destruct(void *this)
     }
     mem_free(self->headers);
     mem_free(self->body);
-    mem_free(self->error);
     mem_free(self->res_string);
     cJSON_Delete(self->json_body);
     mem_free(this);

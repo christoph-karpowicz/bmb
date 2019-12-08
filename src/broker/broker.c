@@ -33,9 +33,11 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
 static struct broker_response consume(Broker *this)
 {
     struct broker_response res;
-    bool success = false;
-    char *msg   = NULL;
-    char *data  = NULL;
+    unsigned short int code;
+    bool success    = false;
+    char *msg       = NULL;
+    char *data      = NULL;
+    char *errMsg    = NULL;
 
     if (!_Queue.isEmpty(this->queue)) {
         Node *node = _Queue.poll(this->queue);
@@ -48,33 +50,42 @@ static struct broker_response consume(Broker *this)
         msg = "Queue is empty.";
     }
 
-    res = create_response(success, msg, data);
+    code = 200;
+
+    res = create_response(success, code, msg, data, errMsg);
     mem_free(data);
 
     return res;
 }
 
-static struct broker_response create_response(bool success, char *message, char *data)
+static struct broker_response create_response(bool success, unsigned short int code, char *message, char *data, char *errorMessage)
 {
     struct broker_response res;
-    cJSON *json_success = NULL;
-    cJSON *json_payload = NULL;
-    cJSON *json_message = NULL;
-    cJSON *json_data    = NULL;
+    unsigned short int altCode  = 0;
+    char *altErrMsg             = NULL;
+    cJSON *json_success         = NULL;
+    cJSON *json_payload         = NULL;
+    cJSON *json_message         = NULL;
+    cJSON *json_data            = NULL;
 
     json_success = cJSON_CreateBool(success);
     if (json_success == NULL)
     {
-        exit(1);
+        altCode = 500;
+        altErrMsg = "Failed to add success value to response JSON.";
+        goto createResponse;
     }
 
     json_payload = cJSON_CreateObject();
 
-    if (message != NULL) {
-        json_message = cJSON_CreateString(message);
+    if (message != NULL || errorMessage != NULL) {
+        json_message = cJSON_CreateString(message != NULL ? message : errorMessage);
         if (json_message == NULL)
         {
-            exit(1);
+            altCode = 500;
+            altErrMsg = "Failed to add message value to response JSON.";
+            goto createResponse;
+
         }
         cJSON_AddItemToObject(json_payload, "message", json_message);
     }
@@ -83,13 +94,19 @@ static struct broker_response create_response(bool success, char *message, char 
         json_data = cJSON_CreateString(data);
         if (json_data == NULL)
         {
-            exit(1);
+            altCode = 500;
+            altErrMsg = "Failed to add data value to response JSON.";
+            goto createResponse;
+
         }
         cJSON_AddItemToObject(json_payload, "data", json_data);
     }
 
-    res.success = json_success;
-    res.payload = json_payload;
+    createResponse:
+    res.success         = json_success;
+    res.payload         = json_payload;
+    res.code            = altCode > 0 ? altCode : code;
+    res.errorMessage    = altErrMsg != NULL ? altErrMsg : errorMessage;
 
     printf("data: %s\n", data);
 
@@ -99,9 +116,11 @@ static struct broker_response create_response(bool success, char *message, char 
 static struct broker_response get(Broker *this, struct broker_request req)
 {
     struct broker_response res;
+    unsigned short int code;
     bool success    = false;
     char *msg       = NULL;
     char *data      = NULL;
+    char *errMsg    = NULL;
 
     const int queueSize =   _Queue.size(this->queue);
     if (queueSize > req.index) {
@@ -113,8 +132,9 @@ static struct broker_response get(Broker *this, struct broker_request req)
     else {
         msg = "Node index out of range.";
     }
+    code = 200;
 
-    res = create_response(success, msg, data);
+    res = create_response(success, code, msg, data, errMsg);
 
     mem_free(data);
 
@@ -124,7 +144,9 @@ static struct broker_response get(Broker *this, struct broker_request req)
 static struct broker_response getAll(Broker *this, struct broker_request req)
 {
     struct broker_response res;
+    unsigned short int code;
     char *msg               = NULL;
+    char *errMsg            = NULL;
     bool success            = false;
     char *data              = NULL;
     const int queueSize     = _Queue.size(this->queue);
@@ -134,9 +156,9 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
     
     nodesArray = cJSON_AddArrayToObject(nodes, "nodes");
     if (nodesArray == NULL) {
-        exit(1);
-        // self->setError(self, "Failed to add an array to JSON node list.");
-        // return false;
+        code = 500;
+        errMsg = "Failed to add an array to JSON node list.";
+        goto createResponse;
     }
 
     for (size_t i = 0; i < queueSize; i++) {
@@ -146,15 +168,15 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
         cJSON *message          = NULL;
 
         if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
-            exit(1);
-            // self->setError(self, "Failed to add index to node JSON object.");
-            // return false;
+            code = 500;
+            errMsg = "Failed to add index to node JSON object.";
+            goto createResponse;
         }
 
         if(cJSON_AddStringToObject(nodeJSONObject, "message", nodeMessage) == NULL) {
-            exit(1);
-            // self->setError(self, "Failed to add message to node JSON object.");
-            // return false;
+            code = 500;
+            errMsg = "Failed to add message to node JSON object.";
+            goto createResponse;
         }
 
         cJSON_AddItemToArray(nodesArray, nodeJSONObject);
@@ -162,15 +184,18 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
 
     nodesString = cJSON_Print(nodes);
     if (nodesString == NULL) {
-        exit(1);
-        // self->setError(self, "Failed to print nodes.");
-        // return false;
+        code = 500;
+        errMsg = "Failed to print nodes.";
+        goto createResponse;
     }
 
     data = (char *) mem_alloc(strlen(nodesString) + 1);
+    code = 200;
+    success = true;
     strcpy(data, nodesString);
     
-    res = create_response(success, msg, data);
+    createResponse:
+    res = create_response(success, code, msg, data, errMsg);
 
     mem_free(data);
 
@@ -180,17 +205,20 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
 static struct broker_response length(Broker *this, struct broker_request req)
 {
     struct broker_response  res;
+    unsigned short int code;
     char *data              = NULL;
     bool success            = true;
     const int queueSize     = _Queue.size(this->queue);
     char *queueSize_str     = intToString(queueSize);
+    char *errMsg            = NULL;
 
     data = (char *) mem_alloc(strlen(queueSize_str) + 1);
+    code = 200;
 
     strcpy(data, queueSize_str);
     mem_free(queueSize_str);
 
-    res = create_response(success, NULL, data);
+    res = create_response(success, code, NULL, data, errMsg);
     mem_free(data);
     
     return res;
@@ -199,15 +227,19 @@ static struct broker_response length(Broker *this, struct broker_request req)
 static struct broker_response produce(Broker *this, struct broker_request req)
 {
     struct broker_response res;
+    unsigned short int code;
     bool success        = true;
     Node *newNode       = Node_new();
     char *msg           = NULL;
+    char *errMsg        = NULL;
+
     _Node.setMessage(newNode, req.msg, strlen(req.msg));
     _Queue.add(this->queue, newNode);
 
     msg = "Message produced.";
+    code = 200;
     
-    res = create_response(success, msg, NULL);
+    res = create_response(success, code, msg, NULL, errMsg);
 
     return res;
 }
