@@ -71,9 +71,9 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
     char *regex_pattern_start = "(";
 
     char *regex_pattern_end;
-    if (strcmp(key, "queue") == 0)
-        regex_pattern_end = "=)([0-9]*)";
-    else
+    // if (strcmp(key, "queue") == 0)
+        // regex_pattern_end = "=)([0-9]*)";
+    // else
         regex_pattern_end = "=)([^&]*)";
 
     char *regex_pattern = (char *) mem_alloc(sizeof(char) * (strlen(regex_pattern_start) + strlen(key) + strlen(regex_pattern_end) + 1));

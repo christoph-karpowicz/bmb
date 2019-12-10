@@ -28,7 +28,7 @@ void *socketThread(void *args)
     res->assemble(res);
 
     // if (req == NULL) {
-        // printf("============\nReq:\n%s\n==========\n", msg);
+        printf("============\nReq:\n%s\n==========\n", msg);
         printf("============\nRes:\n%s\n==========\n", res->get(res));
     // }
     if (req != NULL)
@@ -37,7 +37,7 @@ void *socketThread(void *args)
     send(*newSocketPtr, res->get(res), strlen(res->get(res)), 0);
     res->destruct(res);
 
-    _Queue.displayAll(server->broker->queue);
+    // _Queue.displayAll(server->broker->queue);
     close(*newSocketPtr);
 
     printf("Exit socket thread.\n");

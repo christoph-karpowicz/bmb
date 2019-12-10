@@ -9,15 +9,18 @@
 
 #include "../queue/queue.h"
 #include "../queue/queue_node.h"
+#include "../queue/queue_pool.h"
 #include "../util/util.h"
 
 typedef struct {
-    Queue *queue;
+    // Queue *queue;
+    QueuePool *queuePool;
 } Broker;
 
 struct broker_request {
     const char          *type;
-    unsigned short int  queue_id;
+    Queue               *queue;
+    const char          *queueName;
     unsigned short int  index;
     const char          *msg;
 };
@@ -33,7 +36,7 @@ Broker *broker_init();
 
 struct broker_response broker_dispatch(Broker *this, struct broker_request broker_req);
 
-static struct broker_response consume(Broker *this);
+static struct broker_response consume(Broker *this, struct broker_request req);
 
 static struct broker_response create_response(bool success, unsigned short int code, char *message, char *data, char *errorMessage);
 

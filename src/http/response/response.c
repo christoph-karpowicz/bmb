@@ -71,10 +71,11 @@ static struct broker_response Response_get_response(const void *this)
     struct broker_request   broker_req;
     struct broker_response  res;
 
-    broker_req.type     = req->body->get(req->body, "type");
-    broker_req.queue_id = atoi(req->body->get(req->body, "queue"));
-    broker_req.index    = atoi(req->body->get(req->body, "index"));
-    broker_req.msg      = req->body->get(req->body, "message");
+    broker_req.type         = req->body->get(req->body, "type");
+    broker_req.queue        = NULL;
+    broker_req.queueName    = req->body->get(req->body, "queue");
+    broker_req.index        = atoi(req->body->get(req->body, "index"));
+    broker_req.msg          = req->body->get(req->body, "message");
 
     res = broker_dispatch(self->broker, broker_req);
 

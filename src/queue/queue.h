@@ -12,14 +12,15 @@ typedef struct queue
 
     const struct queue_methods *mth;
 
-    Node* root;
-    Node* tail;
+    char *name;
+    Node *root;
+    Node *tail;
     
 } Queue;
 
-Queue *Queue_new();
+Queue *Queue_new(const char *name);
 
-void Queue_construct(Queue *this);
+void Queue_construct(Queue *this, const char *name);
 
 void Queue_add(Queue *this, Node *rt);
 
@@ -48,7 +49,7 @@ void Queue_destruct(Queue *this);
 struct queue_methods
 {
 
-    void (*construct)(Queue *this);
+    void (*construct)(Queue *this, const char *name);
     void (*add)(Queue *this, Node *rt);
     void (*clear)(Queue *this);
     void (*displayAll)(const Queue *this);

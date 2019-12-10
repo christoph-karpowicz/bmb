@@ -3,16 +3,28 @@
 Broker *broker_init()
 {
     Broker *broker = (Broker *) mem_alloc(sizeof(Broker));
-    broker->queue = Queue_new();
+    broker->queuePool = queue_pool_init();
+    queue_pool_add(broker->queuePool, "main");
     return broker;
 }
 
 struct broker_response broker_dispatch(Broker *this, struct broker_request broker_req)
 {
     struct broker_response res;
+    Queue *queue = NULL;
+    
+    queue = queue_pool_get_by_name(this->queuePool, broker_req.queueName);
+    if (queue == NULL) {
+        char *msg = "Queue not found.";
+        res = create_response(false, 200, msg, NULL, NULL);
+        return res;
+    }
+    else {
+        broker_req.queue = queue;
+    }
     
     if (strcmp(broker_req.type, "consume") == 0) {
-        res = consume(this);
+        res = consume(this, broker_req);
     }
     else if (strcmp(broker_req.type, "produce") == 0) {
         res = produce(this, broker_req);
@@ -30,7 +42,7 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
     return res;
 }
 
-static struct broker_response consume(Broker *this)
+static struct broker_response consume(Broker *this, struct broker_request req)
 {
     struct broker_response res;
     unsigned short int code;
@@ -39,8 +51,8 @@ static struct broker_response consume(Broker *this)
     char *data      = NULL;
     char *errMsg    = NULL;
 
-    if (!_Queue.isEmpty(this->queue)) {
-        Node *node = _Queue.poll(this->queue);
+    if (!_Queue.isEmpty(req.queue)) {
+        Node *node = _Queue.poll(req.queue);
         data = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
         strcpy(data, _Node.getMessage(node));
         _Node.destruct(node);
@@ -122,9 +134,9 @@ static struct broker_response get(Broker *this, struct broker_request req)
     char *data      = NULL;
     char *errMsg    = NULL;
 
-    const int queueSize =   _Queue.size(this->queue);
+    const int queueSize =   _Queue.size(req.queue);
     if (queueSize > req.index) {
-        Node *node = _Queue.get(this->queue, req.index);
+        Node *node = _Queue.get(req.queue, req.index);
         data = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
         strcpy(data, _Node.getMessage(node));
         success = true;
@@ -149,7 +161,7 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
     char *errMsg            = NULL;
     bool success            = false;
     char *data              = NULL;
-    const int queueSize     = _Queue.size(this->queue);
+    const int queueSize     = _Queue.size(req.queue);
     cJSON *nodes            = cJSON_CreateObject();
     cJSON *nodesArray       = NULL;
     char *nodesString       = NULL;
@@ -162,7 +174,7 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
     }
 
     for (size_t i = 0; i < queueSize; i++) {
-        Node *node              = _Queue.get(this->queue, i);
+        Node *node              = _Queue.get(req.queue, i);
         char *nodeMessage       = _Node.getMessage(node);
         cJSON *nodeJSONObject   = cJSON_CreateObject();
         cJSON *message          = NULL;
@@ -208,7 +220,7 @@ static struct broker_response length(Broker *this, struct broker_request req)
     unsigned short int code;
     char *data              = NULL;
     bool success            = true;
-    const int queueSize     = _Queue.size(this->queue);
+    const int queueSize     = _Queue.size(req.queue);
     char *queueSize_str     = intToString(queueSize);
     char *errMsg            = NULL;
 
@@ -234,7 +246,7 @@ static struct broker_response produce(Broker *this, struct broker_request req)
     char *errMsg        = NULL;
 
     _Node.setMessage(newNode, req.msg, strlen(req.msg));
-    _Queue.add(this->queue, newNode);
+    _Queue.add(req.queue, newNode);
 
     msg = "Message produced.";
     code = 200;

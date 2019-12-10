@@ -17,16 +17,18 @@ const struct queue_methods _Queue =
     .destruct = Queue_destruct
 };
 
-Queue *Queue_new()
+Queue *Queue_new(const char *name)
 {
     Queue *newQueue = (Queue *) mem_alloc(sizeof(Queue));
     newQueue->mth = &_Queue;
-    newQueue->mth->construct(newQueue);
+    newQueue->mth->construct(newQueue, name);
     return newQueue;    
 }
 
-void Queue_construct(Queue *this)
+void Queue_construct(Queue *this, const char *name)
 {
+    this->name = (char *) mem_alloc(strlen(name) + 1);
+    strcpy(this->name, name);
     _Queue.reset(this);
     printf("Queue created.\n");
 }
@@ -188,7 +190,6 @@ int Queue_size(const Queue *this)
 
 void Queue_destruct(Queue *this)
 {
-
+    mem_free(this->name);
     mem_free(this);
-
 }
