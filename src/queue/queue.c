@@ -20,9 +20,11 @@ const struct queue_methods _Queue =
 Queue *Queue_new(const char *name)
 {
     Queue *newQueue = (Queue *) mem_alloc(sizeof(Queue));
-    newQueue->mth = &_Queue;
+    newQueue->name  = NULL;
+    newQueue->mth   = &_Queue;
+
     newQueue->mth->construct(newQueue, name);
-    return newQueue;    
+    return newQueue;
 }
 
 void Queue_construct(Queue *this, const char *name)
@@ -30,7 +32,7 @@ void Queue_construct(Queue *this, const char *name)
     this->name = (char *) mem_alloc(strlen(name) + 1);
     strcpy(this->name, name);
     _Queue.reset(this);
-    printf("Queue created.\n");
+    printf("Queue \"%s\" created.\n", this->name);
 }
 
 void Queue_add(Queue *this, Node *rt)

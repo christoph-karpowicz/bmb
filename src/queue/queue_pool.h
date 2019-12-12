@@ -21,6 +21,8 @@ bool queue_pool_add(QueuePool *this, const char *name);
 
 static void queue_pool_clear_nulls(QueuePool *this);
 
+const char **queue_pool_get_all_names(QueuePool *this);
+
 Queue *queue_pool_get_by_name(QueuePool *this, const char *name);
 
 bool queue_pool_remove_by_name(QueuePool *this, const char *name);

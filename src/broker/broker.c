@@ -4,7 +4,6 @@ Broker *broker_init()
 {
     Broker *broker = (Broker *) mem_alloc(sizeof(Broker));
     broker->queuePool = queue_pool_init();
-    queue_pool_add(broker->queuePool, "main");
     return broker;
 }
 
@@ -14,7 +13,7 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
     Queue *queue = NULL;
     
     queue = queue_pool_get_by_name(this->queuePool, broker_req.queueName);
-    if (queue == NULL) {
+    if (queue == NULL && strcmp(broker_req.queueName, "") != 0) {
         char *msg = "Queue not found.";
         res = create_response(false, 200, msg, NULL, NULL);
         return res;
@@ -36,8 +35,44 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
         res = get(this, broker_req);
     }
     else if (strcmp(broker_req.type, "getAll") == 0) {
-        res = getAll(this, broker_req);
+        res = get_all(this, broker_req);
     }
+    else if (strcmp(broker_req.type, "addQueue") == 0) {
+        res = add_queue(this, broker_req);
+    }
+    else if (strcmp(broker_req.type, "getAllQueueNames") == 0) {
+        res = get_all_queue_names(this, broker_req);
+    }
+
+    return res;
+}
+
+static struct broker_response add_queue(Broker *this, struct broker_request req)
+{
+    struct broker_response res;
+    unsigned short int code;
+    bool success        = true;
+    Node *newNode       = Node_new();
+    char *msg           = NULL;
+    char *errMsg        = NULL;
+
+    Queue *queueDuplicate = queue_pool_get_by_name(this->queuePool, req.data);
+    if (queueDuplicate != NULL) {
+        msg = "Failed: Queue with given name already exists.";
+        goto createResponse;
+    }
+
+    if (queue_pool_add(this->queuePool, req.data)) {
+        msg = "Queue created.";
+    }
+    else {
+        msg = "Failed to create queue.";
+    }
+
+    createResponse:
+    code = 200;
+    
+    res = create_response(success, code, msg, NULL, errMsg);
 
     return res;
 }
@@ -153,7 +188,7 @@ static struct broker_response get(Broker *this, struct broker_request req)
     return res;
 }
 
-static struct broker_response getAll(Broker *this, struct broker_request req)
+static struct broker_response get_all(Broker *this, struct broker_request req)
 {
     struct broker_response res;
     unsigned short int code;
@@ -214,6 +249,66 @@ static struct broker_response getAll(Broker *this, struct broker_request req)
     return res;
 }
 
+static struct broker_response get_all_queue_names(Broker *this, struct broker_request req)
+{
+    struct broker_response res;
+    unsigned short int code;
+    char *msg                       = NULL;
+    char *errMsg                    = NULL;
+    bool success                    = false;
+    char *data                      = NULL;
+    const char **queueNamesArray    = queue_pool_get_all_names(this->queuePool);
+    cJSON *queueNames               = cJSON_CreateObject();
+    cJSON *nodesArray               = NULL;
+    char *nodesString               = NULL;
+    
+    nodesArray = cJSON_AddArrayToObject(queueNames, "queueNames");
+    if (nodesArray == NULL) {
+        code = 500;
+        errMsg = "Failed to add an array to JSON node list.";
+        goto createResponse;
+    }
+
+    for (size_t i = 0; i < this->queuePool->length; i++) {
+        cJSON *nodeJSONObject   = cJSON_CreateObject();
+        cJSON *message          = NULL;
+
+        if (cJSON_AddNumberToObject(nodeJSONObject, "index", i) == NULL) {
+            code = 500;
+            errMsg = "Failed to add index to node JSON object.";
+            goto createResponse;
+        }
+
+        if(cJSON_AddStringToObject(nodeJSONObject, "queueName", queueNamesArray[i]) == NULL) {
+            code = 500;
+            errMsg = "Failed to add queue name to node JSON object.";
+            goto createResponse;
+        }
+
+        cJSON_AddItemToArray(nodesArray, nodeJSONObject);
+    }
+
+    nodesString = cJSON_Print(queueNames);
+    if (nodesString == NULL) {
+        code = 500;
+        errMsg = "Failed to print queue names.";
+        goto createResponse;
+    }
+
+    data = (char *) mem_alloc(strlen(nodesString) + 1);
+    code = 200;
+    success = true;
+    strcpy(data, nodesString);
+    
+    createResponse:
+    res = create_response(success, code, msg, data, errMsg);
+
+    mem_free(data);
+    mem_free(queueNamesArray);
+
+    return res;
+}
+
 static struct broker_response length(Broker *this, struct broker_request req)
 {
     struct broker_response  res;
@@ -245,7 +340,7 @@ static struct broker_response produce(Broker *this, struct broker_request req)
     char *msg           = NULL;
     char *errMsg        = NULL;
 
-    _Node.setMessage(newNode, req.msg, strlen(req.msg));
+    _Node.setMessage(newNode, req.data, strlen(req.data));
     _Queue.add(req.queue, newNode);
 
     msg = "Message produced.";

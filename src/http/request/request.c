@@ -2,11 +2,10 @@
 
 Request *Request_parse(const char *req) 
 {
-
     printf("Parsing request... ");
-    Request *request =  (Request *) mem_alloc(sizeof(Request));
-    request->method =   NULL;
-    request->body =     RequestBody_new();
+    Request *request    = (Request *) mem_alloc(sizeof(Request));
+    request->method     =   NULL;
+    request->body       =     RequestBody_new();
 
     char *method = Request_extract_method(req);
     printf("extracted method: %s... ", method); 
@@ -33,10 +32,10 @@ Request *Request_parse(const char *req)
 
     if (strcmp(request->method, "POST") == 0) {
         
-        RequestPair *messagePair = Request_extract_data(req, "message");
-        if (messagePair != NULL) {
-            printf("extracted message: %s\n", messagePair->getValue(messagePair));
-            request->body->add(request->body, messagePair);
+        RequestPair *dataPair = Request_extract_data(req, "data");
+        if (dataPair != NULL) {
+            printf("extracted data: %s\n", dataPair->getValue(dataPair));
+            request->body->add(request->body, dataPair);
         }
 
     }
@@ -49,11 +48,9 @@ Request *Request_parse(const char *req)
             request->body->add(request->body, indexPair);
         }
 
-
     }
 
     return request;
-    
 }
 
 static RequestPair *Request_extract_data(const char *request, const char *key) 
@@ -69,12 +66,7 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
 
     // Compile regex.
     char *regex_pattern_start = "(";
-
-    char *regex_pattern_end;
-    // if (strcmp(key, "queue") == 0)
-        // regex_pattern_end = "=)([0-9]*)";
-    // else
-        regex_pattern_end = "=)([^&]*)";
+    char *regex_pattern_end = "=)([^&[:space:]]*)";
 
     char *regex_pattern = (char *) mem_alloc(sizeof(char) * (strlen(regex_pattern_start) + strlen(key) + strlen(regex_pattern_end) + 1));
     strcpy(regex_pattern, regex_pattern_start);
