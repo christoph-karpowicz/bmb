@@ -12,6 +12,15 @@
 #include "../queue/queue_pool.h"
 #include "../util/util.h"
 
+#define BROKER_CONSUME              "consume"
+#define BROKER_PRODUCE              "produce"
+#define BROKER_LENGTH               "length"
+#define BROKER_GET                  "get"
+#define BROKER_GET_ALL              "getAll"
+#define BROKER_ADD_QUEUE            "addQueue"
+#define BROKER_GET_ALL_QUEUE_NAMES  "getAllQueueNames"
+#define BROKER_REMOVE_QUEUE         "removeQueue"
+
 typedef struct {
     QueuePool *queuePool;
 } Broker;

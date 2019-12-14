@@ -13,6 +13,15 @@ unsigned long long getEpochMilis()
     return millisecondsSinceEpoch;
 }
 
+bool in_str_array(const char *needle, const char haystack[6][12], size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        printf("\nneedle: %s, hay: %s\n", needle, haystack[i]);
+        if (strcmp(needle, haystack[i]) == 0) return true;
+    }
+    return false;
+}
+
 char *intToString(const int i)
 {
     const int queueSize_str_length = i > 0 ? (int)(ceil(log10(i)) + 1) : 2;

@@ -74,8 +74,8 @@ static struct broker_response Response_get_response(const void *this)
     broker_req.type         = req->body->get(req->body, "type");
     broker_req.queue        = NULL;
     broker_req.queueName    = req->body->get(req->body, "queue");
-    broker_req.index        = atoi(req->body->get(req->body, "index"));
-    broker_req.data          = req->body->get(req->body, "data");
+    broker_req.index        = req->body->get(req->body, "index") == NULL ? 0 : atoi(req->body->get(req->body, "index"));
+    broker_req.data         = req->body->get(req->body, "data");
 
     res = broker_dispatch(self->broker, broker_req);
 

@@ -1,5 +1,25 @@
 #include "broker.h"
 
+const char needsQueue[6][12] = {
+    BROKER_CONSUME,
+    BROKER_PRODUCE,
+    BROKER_LENGTH,
+    BROKER_GET,
+    BROKER_GET_ALL,
+    BROKER_REMOVE_QUEUE,
+};
+
+const char needsIndex[1][12] = {
+    BROKER_GET,
+};
+
+const char needsData[3][12] = {
+    BROKER_PRODUCE,
+    BROKER_LENGTH,
+    BROKER_ADD_QUEUE,
+};
+
+
 Broker *broker_init()
 {
     Broker *broker = (Broker *) mem_alloc(sizeof(Broker));
@@ -11,46 +31,64 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
 {
     struct broker_response res;
     Queue *queue    = NULL;
-    char *msg       = NULL;
-    
-    // if (broker_req.queueName != NULL)
-    queue = queue_pool_get_by_name(this->queuePool, broker_req.queueName);
-    if (strcmp(broker_req.queueName, "") == 0) {
-        msg = "Queue name not given.";
-    }
-    else if (queue == NULL && strcmp(broker_req.queueName, "") != 0) {
-        msg = "Queue not found.";
+    char *errMsg    = NULL;
+
+    // Validate the request.
+    bool resNeedsQueue  = in_str_array(broker_req.type, needsQueue, 6);
+    bool resNeedsIndex  = in_str_array(broker_req.type, needsIndex, 1);
+    bool resNeedsData   = in_str_array(broker_req.type, needsData, 3);
+
+    if (resNeedsQueue) {
+        queue = queue_pool_get_by_name(this->queuePool, broker_req.queueName);
+        if (broker_req.queueName == NULL) {
+            errMsg = "Request is missing queue name.";
+        }
+        else if (strcmp(broker_req.queueName, "") == 0) {
+            errMsg = "Empty queue name given.";
+        }
+        else if (queue == NULL && strcmp(broker_req.queueName, "") != 0) {
+            errMsg = "Queue not found.";
+        }
     }
 
-    if (queue == NULL) {
-        res = create_response(false, 200, msg, NULL, NULL);
+    if (resNeedsIndex && broker_req.index == 0) {
+        errMsg = "Request is missing an index.";
+    }
+
+    if (resNeedsData && (broker_req.data == NULL || strcmp(broker_req.data, "") == 0)) {
+        errMsg = "Request is missing data.";
+    }
+
+    if (errMsg != NULL) {
+        res = create_response(false, 200, errMsg, NULL, NULL);
         return res;
     }
     
     broker_req.queue = queue;
     
-    if (strcmp(broker_req.type, "consume") == 0) {
+    // Dispatch broker action.
+    if (strcmp(broker_req.type, BROKER_CONSUME) == 0) {
         res = consume(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "produce") == 0) {
+    else if (strcmp(broker_req.type, BROKER_PRODUCE) == 0) {
         res = produce(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "length") == 0) {
+    else if (strcmp(broker_req.type, BROKER_LENGTH) == 0) {
         res = length(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "get") == 0) {
+    else if (strcmp(broker_req.type, BROKER_GET) == 0) {
         res = get(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "getAll") == 0) {
+    else if (strcmp(broker_req.type, BROKER_GET_ALL) == 0) {
         res = get_all(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "addQueue") == 0) {
+    else if (strcmp(broker_req.type, BROKER_ADD_QUEUE) == 0) {
         res = add_queue(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "getAllQueueNames") == 0) {
+    else if (strcmp(broker_req.type, BROKER_GET_ALL_QUEUE_NAMES) == 0) {
         res = get_all_queue_names(this, broker_req);
     }
-    else if (strcmp(broker_req.type, "removeQueue") == 0) {
+    else if (strcmp(broker_req.type, BROKER_REMOVE_QUEUE) == 0) {
         res = remove_queue(this, broker_req);
     }
 
@@ -371,13 +409,13 @@ static struct broker_response remove_queue(Broker *this, struct broker_request r
     char *msg           = NULL;
     char *errMsg        = NULL;
 
-    Queue *queue = queue_pool_get_by_name(this->queuePool, req.data);
+    Queue *queue = queue_pool_get_by_name(this->queuePool, req.queue->name);
     if (queue == NULL) {
         msg = "Failed: Queue with given name doesn't exist.";
         goto createResponse;
     }
 
-    if (queue_pool_remove_by_name(this->queuePool, req.data)) {
+    if (queue_pool_remove_by_name(this->queuePool, req.queue->name)) {
         success = true;
         msg = "Queue removed.";
     }
