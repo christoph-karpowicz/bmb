@@ -99,7 +99,7 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
     }
     else if (reti == REG_NOMATCH) {
         no_match = true;
-        printf("No match for %s\n", key);
+        printf("No match for %s.\n", key);
     }
     else {
         char msgbuf[100];

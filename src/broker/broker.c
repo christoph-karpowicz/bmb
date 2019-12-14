@@ -10,17 +10,24 @@ Broker *broker_init()
 struct broker_response broker_dispatch(Broker *this, struct broker_request broker_req)
 {
     struct broker_response res;
-    Queue *queue = NULL;
+    Queue *queue    = NULL;
+    char *msg       = NULL;
     
+    // if (broker_req.queueName != NULL)
     queue = queue_pool_get_by_name(this->queuePool, broker_req.queueName);
-    if (queue == NULL && strcmp(broker_req.queueName, "") != 0) {
-        char *msg = "Queue not found.";
+    if (strcmp(broker_req.queueName, "") == 0) {
+        msg = "Queue name not given.";
+    }
+    else if (queue == NULL && strcmp(broker_req.queueName, "") != 0) {
+        msg = "Queue not found.";
+    }
+
+    if (queue == NULL) {
         res = create_response(false, 200, msg, NULL, NULL);
         return res;
     }
-    else {
-        broker_req.queue = queue;
-    }
+    
+    broker_req.queue = queue;
     
     if (strcmp(broker_req.type, "consume") == 0) {
         res = consume(this, broker_req);
@@ -43,6 +50,9 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
     else if (strcmp(broker_req.type, "getAllQueueNames") == 0) {
         res = get_all_queue_names(this, broker_req);
     }
+    else if (strcmp(broker_req.type, "removeQueue") == 0) {
+        res = remove_queue(this, broker_req);
+    }
 
     return res;
 }
@@ -51,7 +61,7 @@ static struct broker_response add_queue(Broker *this, struct broker_request req)
 {
     struct broker_response res;
     unsigned short int code;
-    bool success        = true;
+    bool success        = false;
     Node *newNode       = Node_new();
     char *msg           = NULL;
     char *errMsg        = NULL;
@@ -63,6 +73,7 @@ static struct broker_response add_queue(Broker *this, struct broker_request req)
     }
 
     if (queue_pool_add(this->queuePool, req.data)) {
+        success = true;
         msg = "Queue created.";
     }
     else {
@@ -279,7 +290,7 @@ static struct broker_response get_all_queue_names(Broker *this, struct broker_re
             goto createResponse;
         }
 
-        if(cJSON_AddStringToObject(nodeJSONObject, "queueName", queueNamesArray[i]) == NULL) {
+        if(cJSON_AddStringToObject(nodeJSONObject, "name", queueNamesArray[i]) == NULL) {
             code = 500;
             errMsg = "Failed to add queue name to node JSON object.";
             goto createResponse;
@@ -344,6 +355,37 @@ static struct broker_response produce(Broker *this, struct broker_request req)
     _Queue.add(req.queue, newNode);
 
     msg = "Message produced.";
+    code = 200;
+    
+    res = create_response(success, code, msg, NULL, errMsg);
+
+    return res;
+}
+
+static struct broker_response remove_queue(Broker *this, struct broker_request req)
+{
+    struct broker_response res;
+    unsigned short int code;
+    bool success        = false;
+    Node *newNode       = Node_new();
+    char *msg           = NULL;
+    char *errMsg        = NULL;
+
+    Queue *queue = queue_pool_get_by_name(this->queuePool, req.data);
+    if (queue == NULL) {
+        msg = "Failed: Queue with given name doesn't exist.";
+        goto createResponse;
+    }
+
+    if (queue_pool_remove_by_name(this->queuePool, req.data)) {
+        success = true;
+        msg = "Queue removed.";
+    }
+    else {
+        msg = "Failed to remove queue.";
+    }
+
+    createResponse:
     code = 200;
     
     res = create_response(success, code, msg, NULL, errMsg);

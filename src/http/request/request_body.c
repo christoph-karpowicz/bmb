@@ -41,7 +41,6 @@ const char *RequestBody_get(void *this, const char *key)
 {
 
     RequestBody *self = (RequestBody *)this;
-    const char *empty = "";
 
     for (unsigned short int i = 0; i < self->pairs_length; i++)
     {
@@ -50,7 +49,7 @@ const char *RequestBody_get(void *this, const char *key)
             return pair->getValue(pair);
     }
 
-    return empty;
+    return NULL;
     
 }
 

@@ -51,4 +51,6 @@ static struct broker_response length(Broker *this, struct broker_request req);
 
 static struct broker_response produce(Broker *this, struct broker_request req);
 
+static struct broker_response remove_queue(Broker *this, struct broker_request req);
+
 #endif
