@@ -38,6 +38,7 @@ bool Server_create_socket(Server *s) {
         s->error("ERROR opening socket");
         return false;
     }
+    setsockopt(s->socket, SOL_SOCKET, SO_REUSEADDR, &s->socket, sizeof(int));
     return true;
 
 }

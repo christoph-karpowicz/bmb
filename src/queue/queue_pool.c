@@ -13,10 +13,10 @@ bool queue_pool_add(QueuePool *this, const char *name)
     Queue *newQueue = Queue_new(name);
     
     if (this->length == 0) {
-        this->pool = (Queue **) mem_alloc(sizeof(Queue*));
+        this->pool = (Queue **) mem_alloc(sizeof(Queue *));
     }
     else {
-        this->pool = (Queue **) realloc(this->pool, sizeof(Queue*) * (this->length + 1));
+        this->pool = (Queue **) realloc(this->pool, sizeof(Queue *) * (this->length + 1));
     }
 
     if (this->pool == NULL) 
@@ -98,4 +98,5 @@ QueuePool *queue_pool_destruct(QueuePool *this)
         _Queue.destruct(this->pool[i]);
     }
     mem_free(this->pool);
+    mem_free(this);
 }

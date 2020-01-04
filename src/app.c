@@ -30,8 +30,6 @@ void close_signal_handler(int sig)
     printf("Do you really want to quit? [y/n]");
     c = getchar();
     if (c == 'y' || c == 'Y') {
-        // _Queue.clear(server_ptr->broker->queue);
-        // _Queue.destruct(server_ptr->broker->queue);
         queue_pool_destruct(server_ptr->broker->queuePool);
         printf("* request count: %d\n", server_ptr->requestCounter);
         Server_destruct(server_ptr);
@@ -71,7 +69,7 @@ int main() {
         Server_accept(&server);
 
         args.server = &server;
-        args.time_start = getEpochMilis();
+        args.time_start = get_epoch_milis();
 
         // Create separate thread for received client request.
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)

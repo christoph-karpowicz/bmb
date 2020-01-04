@@ -135,6 +135,7 @@ static void Response_set_error(const void *this, char *errorMessage)
     Response *self  = (Response *)this;
     size_t body_len = strlen(errorMessage) + 1;
 
+    mem_free(self->body);
     self->body = (char *) mem_alloc(sizeof(char) * body_len);
 
     strcpy(self->body, errorMessage);
@@ -186,8 +187,7 @@ static void Response_set_status(const void *this, unsigned short int code)
     char                *status_txt;
     Response *self =    (Response *)this;
 
-    switch(code)
-    {
+    switch(code) {
         case 200:
             status_txt = STATUS_200;
             break;

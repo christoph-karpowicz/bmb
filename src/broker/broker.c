@@ -100,7 +100,6 @@ static struct broker_response add_queue(Broker *this, struct broker_request req)
     struct broker_response res;
     unsigned short int code;
     bool success        = false;
-    Node *newNode       = Node_new();
     char *msg           = NULL;
     char *errMsg        = NULL;
 
@@ -137,8 +136,11 @@ static struct broker_response consume(Broker *this, struct broker_request req)
 
     if (!_Queue.isEmpty(req.queue)) {
         Node *node = _Queue.poll(req.queue);
-        data = (char *) mem_alloc(strlen(_Node.getMessage(node)) + 1);
-        strcpy(data, _Node.getMessage(node));
+        char decodedMessage[strlen(_Node.getMessage(node)) + 1];
+        url_decode(_Node.getMessage(node), decodedMessage);
+
+        data = (char *) mem_alloc(strlen(decodedMessage) + 1);
+        strcpy(data, decodedMessage);
         _Node.destruct(node);
         success = true;
     }
@@ -204,7 +206,7 @@ static struct broker_response create_response(bool success, unsigned short int c
     res.code            = altCode > 0 ? altCode : code;
     res.errorMessage    = altErrMsg != NULL ? altErrMsg : errorMessage;
 
-    printf("data: %s\n", data);
+    // printf("data: %s\n", data);
 
     return res;
 }
@@ -302,7 +304,6 @@ static struct broker_response get_all_queue_names(Broker *this, struct broker_re
 {
     struct broker_response res;
     unsigned short int code;
-    char *msg                       = NULL;
     char *errMsg                    = NULL;
     bool success                    = false;
     char *data                      = NULL;
@@ -350,7 +351,7 @@ static struct broker_response get_all_queue_names(Broker *this, struct broker_re
     strcpy(data, nodesString);
     
     createResponse:
-    res = create_response(success, code, msg, data, errMsg);
+    res = create_response(success, code, NULL, data, errMsg);
 
     mem_free(data);
     mem_free(queueNamesArray);
@@ -365,7 +366,7 @@ static struct broker_response length(Broker *this, struct broker_request req)
     char *data              = NULL;
     bool success            = true;
     const int queueSize     = _Queue.size(req.queue);
-    char *queueSize_str     = intToString(queueSize);
+    char *queueSize_str     = int_to_string(queueSize);
     char *errMsg            = NULL;
 
     data = (char *) mem_alloc(strlen(queueSize_str) + 1);

@@ -1,6 +1,6 @@
 #include "util.h"
 
-unsigned long long getEpochMilis()
+unsigned long long get_epoch_milis()
 {
     struct timeval tv;
 
@@ -16,16 +16,43 @@ unsigned long long getEpochMilis()
 bool in_str_array(const char *needle, const char haystack[6][12], size_t size)
 {
     for (size_t i = 0; i < size; i++) {
-        printf("\nneedle: %s, hay: %s\n", needle, haystack[i]);
         if (strcmp(needle, haystack[i]) == 0) return true;
     }
     return false;
 }
 
-char *intToString(const int i)
+char *int_to_string(const int i)
 {
     const int queueSize_str_length = i > 0 ? (int)(ceil(log10(i)) + 1) : 2;
     char *queueSize_str = (char *) mem_alloc(queueSize_str_length + 1);
     sprintf(queueSize_str, "%d", i);
     return queueSize_str;
+}
+
+inline int is_hexadecimal(int c)
+{
+	return	(c >= '0' && c <= '9')	||
+		    (c >= 'a' && c <= 'f')	||
+		    (c >= 'A' && c <= 'F');
+}
+
+int url_decode(const char *str, char *decoded)
+{
+	char *output;
+	const char *end = str + strlen(str);
+	int c;
+    
+	for (output = decoded; str <= end; output++) {
+		c = *str++;
+		if (c == '+') c = ' ';
+		else if (c == '%' && 
+				(!is_hexadecimal(*str++)	||
+				!is_hexadecimal(*str++)	||
+				!sscanf(str - 2, "%2x", &c)))
+			return -1;
+ 
+		if (decoded) *output = c;
+	}
+ 
+	return output - decoded;
 }
