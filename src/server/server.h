@@ -11,7 +11,6 @@
 #include <stdbool.h>
 
 #include "../broker/broker.h"
-#include "../persist/persist.h"
 #include "../util/mem.h"
 
 #define PORT 8080
