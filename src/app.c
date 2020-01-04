@@ -28,6 +28,7 @@ void close_signal_handler(int sig)
 
     signal(sig, SIG_IGN);
     printf("Do you really want to quit? [y/n]");
+
     c = getchar();
     if (c == 'y' || c == 'Y') {
         queue_pool_destruct(server_ptr->broker->queuePool);
@@ -38,8 +39,9 @@ void close_signal_handler(int sig)
         printf("========\n");
         exit(1);
     }
-    else
+    else {
         signal(SIGINT, close_signal_handler);
+    }
     // getchar();
 }
 
@@ -60,8 +62,8 @@ int main() {
     else
         server.error("ERROR on listen attempt");
 
-    pthread_t   tid[50];
-    int         i = 0;
+    pthread_t tid[50];
+    int i = 0;
     
     while(1) {
         socket_thread_args args; 
@@ -77,11 +79,9 @@ int main() {
 
         printf("Request count: %d\n", server.requestCounter);
 
-        if (i >= 50)
-        {
+        if (i >= 50) {
             i = 0;
-            while(i < 50)
-            {
+            while(i < 50) {
                 pthread_join(tid[i++], NULL);
             }
             i = 0;
