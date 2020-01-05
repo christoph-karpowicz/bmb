@@ -10,7 +10,7 @@
 */
 struct persist_response persist_dispatch(struct persist_request req)
 {
-	struct persist_response res = {NULL, true, NULL};
+	struct persist_response res = {NULL, true, NULL, 0};
 	char path[50] = "../data/";
 	strcat(path, req.queueName);
 
@@ -23,33 +23,57 @@ struct persist_response persist_dispatch(struct persist_request req)
 
     if (req.type == PERSIST_ADD_QUEUE) {
 		if (!create_queue_dir(path)) {
-			fprintf(stderr, "Error creating directory: %s\n", strerror(errno));
-			exit(1);
+			res.success = false;
+			res.errorMessage = create_error_message("Error creating directory: ", strerror(errno));
 		}
 	}
     else if (req.type == PERSIST_REMOVE_QUEUE) {
 		if (!remove_queue(path)) {
-			fprintf(stderr, "Error creating file: %s\n", strerror(errno));
+			res.success = false;
+			res.errorMessage = create_error_message("Error removing queue: ", strerror(errno));
+			// fprintf(stderr, "Error removing queue: %s\n", strerror(errno));
 		}
 	}
 	else if (req.type == PERSIST_READ_QUEUE) {
 		const size_t queueLength = get_queue_length(path);
-		const int *arr = read_queue(path);
-
-		for (size_t i = 0; i < queueLength; i++) {
-			printf("%d\n", arr[i]);
+		int *arr = NULL;
+		
+		if (!(arr = read_queue(path))) {
+			res.success = false;
+			res.errorMessage = create_error_message("Error reading queue: ", strerror(errno));
+		}
+		else {
+			for (size_t i = 0; i < queueLength; i++) {
+				printf("%d\n", arr[i]);
+			}
+			res.data = arr;
+			res.arrLength = queueLength;
+		}
+	}
+	else if (req.type == PERSIST_GET_QUEUE_LIST) {
+		void **queues = NULL;
+		if (!(queues = get_queue_list())) {
+			res.success = false;
+			res.errorMessage = create_error_message("Error getting queue list: ", strerror(errno));
+		}
+		else {
+			for (size_t i = 1; i <= *((size_t *) queues[0]); i++) {
+				// printf("%ld\n", *((size_t *) queues[0]));
+				printf("%s\n", (char *) queues[i]);
+			}
+			res.data = queues;
 		}
 	}
 	else if (req.type == PERSIST_ADD_NODE) {
 		if (!create_node_file(path, nodeIdStr, (char *) req.data)) {
-			fprintf(stderr, "Error creating file: %s\n", strerror(errno));
-			exit(1);
+			res.success = false;
+			res.errorMessage = create_error_message("Error creating file: ", strerror(errno));
 		}
 	}
     else if (req.type == PERSIST_REMOVE_NODE) {
 		if (!remove_node(path, nodeIdStr)) {
-			fprintf(stderr, "Error removing file: %s\n", strerror(errno));
-			exit(1);
+			res.success = false;
+			res.errorMessage = create_error_message("Error removing file: ", strerror(errno));
 		}
 	}
 	else if (req.type == PERSIST_READ_NODE) {
@@ -70,6 +94,24 @@ struct persist_response persist_dispatch(struct persist_request req)
 	free(nodeIdStr);
 
 	return res;
+}
+
+static DIR *check_dir(const char *path)
+{
+	DIR *dir;
+	if ((dir = opendir(path)) != NULL) {
+		return dir;
+	}
+
+	return NULL;
+}
+
+static char *create_error_message(const char *part1, const char *part2)
+{
+	char *errMsg = (char *) malloc(strlen(part1) + strlen(part2) + 1);
+	strcpy(errMsg, part1);
+	strcat(errMsg, part2);
+	return errMsg;
 }
 
 static bool create_node_file(const char *path, const char *name, const char *content)
@@ -112,22 +154,46 @@ static bool create_queue_dir(const char *path)
 
 static size_t get_queue_length(const char *path)
 {
-	DIR *dir;
+	DIR *dir = check_dir(path);
+	if (!dir) return 0;
+
 	struct dirent *ent;
 	size_t count = 0;
-	if ((dir = opendir (path)) != NULL) {
-		while ((ent = readdir(dir)) != NULL) {
-			if (atoi(ent->d_name) != 0) {
-				count++;
-			}
+
+	while ((ent = readdir(dir)) != NULL) {
+		if (atoi(ent->d_name) != 0) {
+			count++;
 		}
-		closedir (dir);
-	} else {
-		perror ("");
-		// return EXIT_FAILURE;
 	}
+	closedir(dir);
 
 	return count;
+}
+
+static void **get_queue_list()
+{
+	DIR *dir = check_dir("../data");
+	if (!dir) return NULL;
+
+	struct dirent *ent;
+	size_t count = 0;
+	void **queueList = (void **) malloc(sizeof(size_t *));
+
+	while ((ent = readdir(dir)) != NULL) {
+		if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+			printf("- %s\n", ent->d_name);
+			queueList = (void **) realloc(queueList, sizeof(size_t) + (sizeof(char *) * (count + 1)));
+			
+			queueList[++count] = ent->d_name;
+		}
+	}
+	closedir(dir);
+
+	size_t *size = (void *) malloc(sizeof(size_t));
+	*size = count;
+	queueList[0] = size;
+
+	return queueList;
 }
 
 static char *read_node(const char *path, const char *name)
@@ -181,12 +247,15 @@ static bool remove_node(const char *path, const char *name)
 
 static int *read_queue(const char *path)
 {
-	DIR *dir;
+	DIR *dir = check_dir(path);
+	if (!dir) return NULL;
+
 	struct dirent *ent;
 	int *nodeFileArr = NULL;
 	size_t count = 0;
-	if ((dir = opendir (path)) != NULL) {
-		while ((ent = readdir(dir)) != NULL) {
+
+	while ((ent = readdir(dir)) != NULL) {
+		if (atoi(ent->d_name) != 0) {
 			if (nodeFileArr == NULL) {
 				nodeFileArr = (int *) malloc(sizeof(int));
 			}
@@ -194,25 +263,21 @@ static int *read_queue(const char *path)
 				nodeFileArr = (int *) realloc(nodeFileArr, sizeof(int) * (count + 1));
 			}
 
-			if (atoi(ent->d_name) != 0) {
-				nodeFileArr[count++] = atoi(ent->d_name);
-				// printf ("%d\n", atoi(ent->d_name));
-			}
+			nodeFileArr[count++] = atoi(ent->d_name);
 		}
-		closedir (dir);
-	} else {
-		perror ("");
-		// return EXIT_FAILURE;
 	}
+	closedir(dir);
 
 	return nodeFileArr;
 }
 
 static bool remove_queue(const char *path)
 {
-	DIR *dir;
-	struct dirent *ent;
+	DIR *dir = check_dir(path);
+	if (!dir) return NULL;
+
 	int *nodeFileArr = read_queue(path);
+
 	const size_t queueLength = get_queue_length(path);
 
 	for (size_t i = 0; i < queueLength; i++) {
@@ -224,8 +289,11 @@ static bool remove_queue(const char *path)
 			return false;
 		}
 	}
-
+	
 	free(nodeFileArr);
+
+	if (rmdir(path) != 0)
+		return false;
 
 	return true;
 }
