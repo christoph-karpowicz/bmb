@@ -26,7 +26,8 @@ typedef struct persist
 struct persist_request {
     const unsigned short int    type;
     const char                  *queueName;
-    const unsigned int          nodeIndex;
+    const unsigned int          nodeId;
+    void                        *data;
 };
 
 struct persist_response {
@@ -45,7 +46,11 @@ static bool create_queue_dir(const char *dirName);
 
 static char *read_node(const char *path, const char *name);
 
+static bool remove_node(const char *path, const char *name);
+
 static int *read_queue(const char *path);
+
+static bool remove_queue(const char *path);
 
 static size_t get_queue_length(const char *path);
 

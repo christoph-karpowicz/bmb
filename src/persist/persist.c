@@ -10,17 +10,16 @@
 */
 struct persist_response persist_dispatch(struct persist_request req)
 {
-	struct persist_response res = {NULL, true};
-	char path[50] 				= "../data/";
+	struct persist_response res = {NULL, true, NULL};
+	char path[50] = "../data/";
 	strcat(path, req.queueName);
 
-	const size_t queueLength = get_queue_length(path);
-	int *arr = read_queue(path);
-	for (size_t i = 0; i < queueLength; i++) {
-		printf("%d\n", arr[i]);
+	char *nodeIdStr = NULL;
+	if (req.nodeId) {
+		int length = (int)((ceil(log10(req.nodeId)) + 1) * sizeof(char));
+		nodeIdStr = (char *) malloc(length);
+		sprintf(nodeIdStr, "%d", req.nodeId);
 	}
-
-	printf("\n\n%s\n", read_node(path, "11"));
 
     if (req.type == PERSIST_ADD_QUEUE) {
 		if (!create_queue_dir(path)) {
@@ -29,31 +28,46 @@ struct persist_response persist_dispatch(struct persist_request req)
 		}
 	}
     else if (req.type == PERSIST_REMOVE_QUEUE) {
-
+		if (!remove_queue(path)) {
+			fprintf(stderr, "Error creating file: %s\n", strerror(errno));
+		}
 	}
 	else if (req.type == PERSIST_READ_QUEUE) {
+		const size_t queueLength = get_queue_length(path);
+		const int *arr = read_queue(path);
 
+		for (size_t i = 0; i < queueLength; i++) {
+			printf("%d\n", arr[i]);
+		}
 	}
 	else if (req.type == PERSIST_ADD_NODE) {
-		int length = (int)((ceil(log10(req.nodeIndex)) + 1) * sizeof(char));
-		char nodeIndexStr[length];
-		sprintf(nodeIndexStr, "%d", req.nodeIndex);
-
-		if (!create_node_file(path, nodeIndexStr, "testestes sadsadsad\nsdads 1111111111111")) {
+		if (!create_node_file(path, nodeIdStr, (char *) req.data)) {
 			fprintf(stderr, "Error creating file: %s\n", strerror(errno));
 			exit(1);
 		}
 	}
     else if (req.type == PERSIST_REMOVE_NODE) {
-
+		if (!remove_node(path, nodeIdStr)) {
+			fprintf(stderr, "Error removing file: %s\n", strerror(errno));
+			exit(1);
+		}
 	}
 	else if (req.type == PERSIST_READ_NODE) {
-
+		char *nodeContent = read_node(path, nodeIdStr);
+		if (nodeContent) {
+			res.data = nodeContent;
+		}
+		else {
+			res.success = false;
+			res.errorMessage = "Failed to read node.";
+		}
 	}
 	else {
 		res.success = false;
 		res.errorMessage = "Persistence request type not recognized.";
 	}
+
+	free(nodeIdStr);
 
 	return res;
 }
@@ -132,7 +146,7 @@ static char *read_node(const char *path, const char *name)
 		char *nodeContent = (char *) malloc(buff_len);
 		char c;
 
-		while ((c=fgetc(fp)) != EOF) {
+		while ((c = fgetc(fp)) != EOF) {
 			buff_len++;
 			char *tmp = (char *) realloc(nodeContent, buff_len + 1);
 			nodeContent = tmp;
@@ -148,6 +162,21 @@ static char *read_node(const char *path, const char *name)
 	}
 
 	return NULL;
+}
+
+static bool remove_node(const char *path, const char *name)
+{
+	char filePath[50];
+	int unlinked;
+	strcpy(filePath, path);
+	strcat(filePath, "/");
+	strcat(filePath, name);
+
+	if ((unlinked = unlink(filePath)) == -1) {
+		return false;
+	}
+
+	return true;
 }
 
 static int *read_queue(const char *path)
@@ -167,7 +196,7 @@ static int *read_queue(const char *path)
 
 			if (atoi(ent->d_name) != 0) {
 				nodeFileArr[count++] = atoi(ent->d_name);
-				printf ("%d\n", atoi(ent->d_name));
+				// printf ("%d\n", atoi(ent->d_name));
 			}
 		}
 		closedir (dir);
@@ -177,6 +206,28 @@ static int *read_queue(const char *path)
 	}
 
 	return nodeFileArr;
+}
+
+static bool remove_queue(const char *path)
+{
+	DIR *dir;
+	struct dirent *ent;
+	int *nodeFileArr = read_queue(path);
+	const size_t queueLength = get_queue_length(path);
+
+	for (size_t i = 0; i < queueLength; i++) {
+		int length = (int)((ceil(log10(nodeFileArr[i])) + 1) * sizeof(char));
+		char *nodeIdStr = (char *) malloc(length);
+		sprintf(nodeIdStr, "%d", nodeFileArr[i]);
+
+		if (!remove_node(path, nodeIdStr)) {
+			return false;
+		}
+	}
+
+	free(nodeFileArr);
+
+	return true;
 }
 
 void persist_destruct(Persist *persist)
