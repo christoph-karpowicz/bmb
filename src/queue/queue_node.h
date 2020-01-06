@@ -14,12 +14,13 @@ struct node
     
     const struct node_methods *mth;
 
+    unsigned int id;
     char *message;
     Node *next;
     
 };
 
-Node *Node_new();
+Node *Node_new(unsigned int id);
 
 void Node_construct(Node *this);
 

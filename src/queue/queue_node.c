@@ -17,12 +17,12 @@ void Node_construct(Node *this)
 {
     this->message = NULL;
     this->next = NULL;
-    printf("construct node\n");
 }
 
-Node *Node_new()
+Node *Node_new(unsigned int id)
 {
     Node *newNode = (Node *) mem_alloc(sizeof(Node));
+    newNode->id = id;
     newNode->mth = &_Node;
     newNode->mth->construct(newNode);
     return newNode;
@@ -30,7 +30,6 @@ Node *Node_new()
 
 void Node_clear_message(Node *this) 
 {
-    printf("clear: %p\n", this->message);
     if (this->message != NULL)
         mem_free(this->message);
 }

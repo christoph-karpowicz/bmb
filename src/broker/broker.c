@@ -24,6 +24,7 @@ Broker *broker_init()
 {
     Broker *broker = (Broker *) mem_alloc(sizeof(Broker));
     broker->queuePool = queue_pool_init();
+    queue_pool_load(broker->queuePool);
     return broker;
 }
 
@@ -383,12 +384,18 @@ static struct broker_response length(Broker *this, struct broker_request req)
 
 static struct broker_response produce(Broker *this, struct broker_request req)
 {
+    struct persist_request persist_req = {PERSIST_GET_NEXT_ID, req.queue->name, 0, NULL};
+    struct persist_response persist_res = persist_dispatch(persist_req);
+    
     struct broker_response res;
     unsigned short int code;
-    bool success        = true;
-    Node *newNode       = Node_new();
-    char *msg           = NULL;
-    char *errMsg        = NULL;
+    bool success            = true;
+    unsigned int newNodeId  = *((unsigned int *) persist_res.data);
+    Node *newNode           = Node_new(newNodeId);
+    char *msg               = NULL;
+    char *errMsg            = NULL;
+
+    mem_free(persist_res.data);
 
     _Node.setMessage(newNode, req.data, strlen(req.data));
     _Queue.add(req.queue, newNode);
@@ -406,7 +413,6 @@ static struct broker_response remove_queue(Broker *this, struct broker_request r
     struct broker_response res;
     unsigned short int code;
     bool success        = false;
-    Node *newNode       = Node_new();
     char *msg           = NULL;
     char *errMsg        = NULL;
 

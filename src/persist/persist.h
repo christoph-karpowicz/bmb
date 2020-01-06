@@ -8,8 +8,10 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "../util/mem.h"
+#include "../util/util.h"
 
 #define PERSIST_ADD_QUEUE       1
 #define PERSIST_REMOVE_QUEUE    2
@@ -18,6 +20,7 @@
 #define PERSIST_ADD_NODE        5
 #define PERSIST_REMOVE_NODE     6
 #define PERSIST_READ_NODE       7
+#define PERSIST_GET_NEXT_ID     8
 
 typedef struct persist 
 {
@@ -35,7 +38,6 @@ struct persist_response {
     char *errorMessage;
     bool success;
     void *data;
-    size_t arrLength;
 };
 
 Persist *persist_init();
@@ -48,6 +50,8 @@ static bool create_node_file(const char *path, const char *name, const char *con
 
 static bool create_queue_dir(const char *dirName);
 
+static unsigned int *get_next_node_id(const char *path);
+
 static size_t get_queue_length(const char *path);
 
 static void **get_queue_list();
@@ -58,7 +62,7 @@ static bool remove_node(const char *path, const char *name);
 
 static int *read_queue(const char *path);
 
-static bool remove_queue(const char *path);
+static bool persist_remove_queue(const char *path);
 
 void persist_destruct(Persist *this);
 

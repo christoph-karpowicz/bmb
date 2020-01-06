@@ -36,6 +36,16 @@ inline int is_hexadecimal(int c)
 		    (c >= 'A' && c <= 'F');
 }
 
+static int sort_cmp_func (const void *a, const void *b) {
+   return (*(int*)a - *(int*)b);
+}
+
+int *sort_int_array_asc(int *arr, size_t size)
+{
+	qsort(arr, size, sizeof(int), sort_cmp_func);
+	return arr;
+}
+
 int url_decode(const char *str, char *decoded)
 {
 	char *output;

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "queue.h"
+#include "../persist/persist.h"
 #include "../util/mem.h"
 
 typedef struct queue_pool 
@@ -24,6 +25,8 @@ static void queue_pool_clear_nulls(QueuePool *this);
 const char **queue_pool_get_all_names(QueuePool *this);
 
 Queue *queue_pool_get_by_name(QueuePool *this, const char *name);
+
+void queue_pool_load(QueuePool *this);
 
 bool queue_pool_remove_by_name(QueuePool *this, const char *name);
 

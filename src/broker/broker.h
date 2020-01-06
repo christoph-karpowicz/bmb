@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <cjson/cJSON.h>
 
+#include "../persist/persist.h"
 #include "../queue/queue.h"
 #include "../queue/queue_node.h"
 #include "../queue/queue_pool.h"

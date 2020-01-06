@@ -16,6 +16,8 @@ char *int_to_string(const int i);
 
 int is_hexadecimal(int x);
 
+int *sort_int_array_asc(int *arr, size_t size);
+
 int url_decode(const char *str, char *decoded);
 
 #endif

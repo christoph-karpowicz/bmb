@@ -49,7 +49,7 @@ void Queue_add(Queue *this, Node *rt)
     }
     this->root = rt;
 
-    printf("========================\n%s\n", _Node.getMessage(rt));
+    // printf("========================\n%s\n", _Node.getMessage(rt));
     
 }
 
