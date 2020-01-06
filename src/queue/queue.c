@@ -19,9 +19,10 @@ const struct queue_methods _Queue =
 
 Queue *Queue_new(const char *name)
 {
-    Queue *newQueue = (Queue *) mem_alloc(sizeof(Queue));
-    newQueue->name  = NULL;
-    newQueue->mth   = &_Queue;
+    Queue *newQueue     = (Queue *) mem_alloc(sizeof(Queue));
+    newQueue->name      = NULL;
+    newQueue->persist   = true;
+    newQueue->mth       = &_Queue;
 
     newQueue->mth->construct(newQueue, name);
     return newQueue;
@@ -35,10 +36,23 @@ void Queue_construct(Queue *this, const char *name)
     printf("Queue \"%s\" created.\n", this->name);
 }
 
-void Queue_add(Queue *this, Node *rt)
+bool Queue_add(Queue *this, Node *rt)
 {
+    if (this->persist) {
+        struct persist_request pidreq = {PERSIST_GET_NEXT_ID, this->name, 0, NULL};
+        struct persist_response pidres = persist_dispatch(pidreq);
+        unsigned int nextId = *((unsigned int *) pidres.data);
+        mem_free(pidres.data);
 
-    if (this->root != NULL) 
+        struct persist_request preq = {PERSIST_ADD_NODE, this->name, nextId, _Node.getMessage(rt)};
+        struct persist_response pres = persist_dispatch(preq);
+        if (!pres.success) {
+            fprintf(stderr, "%s\n", pres.errorMessage);
+            return false;
+        }
+    }
+
+    if (this->root != NULL)
     {
         _Node.setNext(rt, this->root);
     }
@@ -50,7 +64,7 @@ void Queue_add(Queue *this, Node *rt)
     this->root = rt;
 
     // printf("========================\n%s\n", _Node.getMessage(rt));
-    
+    return true;
 }
 
 void Queue_clear(Queue *this)
@@ -147,11 +161,19 @@ Node *Queue_peek(const Queue *this)
 
 Node *Queue_poll(Queue *this)
 {
-
     if (_Queue.isEmpty(this)) return NULL;
 
-    Node *result = this->tail;
+    Node *tail = this->tail;
     Node *nextTail = _Queue.getNextTail(this);
+
+    if (this->persist) {
+        struct persist_request preq = {PERSIST_REMOVE_NODE, this->name, tail->id, NULL};
+        struct persist_response pres = persist_dispatch(preq);
+        if (!pres.success) {
+            fprintf(stderr, "%s\n", pres.errorMessage);
+            return NULL;
+        }
+    }
 
     if (nextTail != NULL)
     {
@@ -161,7 +183,7 @@ Node *Queue_poll(Queue *this)
     else 
         _Queue.reset(this);
     
-    return result;
+    return tail;
 
 }
 

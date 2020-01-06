@@ -18,7 +18,7 @@ typedef struct queue_pool
 
 QueuePool *queue_pool_init();
 
-bool queue_pool_add(QueuePool *this, const char *name);
+bool queue_pool_add(QueuePool *this, const char *name, const bool init);
 
 static void queue_pool_clear_nulls(QueuePool *this);
 

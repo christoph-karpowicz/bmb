@@ -110,7 +110,7 @@ static struct broker_response add_queue(Broker *this, struct broker_request req)
         goto createResponse;
     }
 
-    if (queue_pool_add(this->queuePool, req.data)) {
+    if (queue_pool_add(this->queuePool, req.data, false)) {
         success = true;
         msg = "Queue created.";
     }

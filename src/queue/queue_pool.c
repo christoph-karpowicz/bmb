@@ -8,9 +8,18 @@ QueuePool *queue_pool_init()
     return newQueuePool;
 }
 
-bool queue_pool_add(QueuePool *this, const char *name)
+bool queue_pool_add(QueuePool *this, const char *name, const bool init)
 {
     Queue *newQueue = Queue_new(name);
+
+    if (!init) {
+        struct persist_request preq = {PERSIST_ADD_QUEUE, name, 0, NULL};
+        struct persist_response pres = persist_dispatch(preq);
+        if (!pres.success) {
+            fprintf(stderr, "%s\n", pres.errorMessage);
+            return false;
+        }
+    }
     
     if (this->length == 0) {
         this->pool = (Queue **) mem_alloc(sizeof(Queue *));
@@ -81,16 +90,16 @@ void queue_pool_load(QueuePool *this)
     printf("Loading queue pool...\n");
     struct persist_request preq = {PERSIST_GET_QUEUE_LIST, NULL, 0, NULL};
     struct persist_response pres = persist_dispatch(preq);
-
     if (!pres.success) {
         fprintf(stderr, "%s\n", pres.errorMessage);
         exit(1);
     }
 
     void **queueList = pres.data;
-    printf("Number of queues found: %ld\n", *((size_t *) queueList[0]));
+    size_t numberOfQueues = *((size_t *) queueList[0]);
+    printf("Number of queues found: %ld\n", numberOfQueues);
     // Create queues.
-    for (size_t i = 1; i <= *((size_t *) queueList[0]); i++) {
+    for (size_t i = 1; i <= numberOfQueues; i++) {
         char *queueName = (char *) queueList[i];
         struct persist_request pqreq = {PERSIST_READ_QUEUE, queueName, 0, NULL};
         struct persist_response pqres = persist_dispatch(pqreq);
@@ -102,8 +111,9 @@ void queue_pool_load(QueuePool *this)
 
         int *queueNodes = pqres.data;
 
-        queue_pool_add(this, queueName);
+        queue_pool_add(this, queueName, true);
         Queue *queue = queue_pool_get_by_name(this, queueName);
+        queue->persist = false;
 
         // Create nodes.
         printf("Number of nodes found: %d\n", queueNodes[0]);
@@ -125,18 +135,21 @@ void queue_pool_load(QueuePool *this)
             printf("Loaded node: %d\n", queueNodes[i]);
         }
 
+        // Get and show next node id in currently loaded queue.
         struct persist_request pidreq = {PERSIST_GET_NEXT_ID, queueName, 0, NULL};
         struct persist_response pidres = persist_dispatch(pidreq);
         printf("Next id will be: %d\n", *((unsigned int *) pidres.data));
         mem_free(pidres.data);
 
         mem_free(queueNodes);
-        mem_free(queueName);
+        queue->persist = true;
         printf("====\n");
 
     }
 
-    mem_free(queueList[0]);
+    for (size_t i = 0; i <= numberOfQueues; i++) {
+        mem_free(queueList[i]);
+    }
     mem_free(queueList);
     printf("Queue pool loaded.\n\n");
 }
@@ -144,6 +157,13 @@ void queue_pool_load(QueuePool *this)
 
 bool queue_pool_remove_by_name(QueuePool *this, const char *name)
 {
+    struct persist_request preq = {PERSIST_REMOVE_QUEUE, name, 0, NULL};
+    struct persist_response pres = persist_dispatch(preq);
+    if (!pres.success) {
+        fprintf(stderr, "%s\n", pres.errorMessage);
+        return false;
+    }
+    
     for (size_t i = 0; i < this->length; i++) {
         if (strcmp(this->pool[i]->name, name) == 0) {
             _Queue.clear(this->pool[i]);

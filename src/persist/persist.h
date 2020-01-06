@@ -22,11 +22,6 @@
 #define PERSIST_READ_NODE       7
 #define PERSIST_GET_NEXT_ID     8
 
-typedef struct persist 
-{
-
-} Persist;
-
 struct persist_request {
     const unsigned short int    type;
     const char                  *queueName;
@@ -39,8 +34,6 @@ struct persist_response {
     bool success;
     void *data;
 };
-
-Persist *persist_init();
 
 struct persist_response persist_dispatch();
 
@@ -63,7 +56,5 @@ static bool remove_node(const char *path, const char *name);
 static int *read_queue(const char *path);
 
 static bool persist_remove_queue(const char *path);
-
-void persist_destruct(Persist *this);
 
 #endif

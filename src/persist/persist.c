@@ -26,14 +26,13 @@ struct persist_response persist_dispatch(struct persist_request req)
 		goto resReturn;
 	}
 
-	// printf("q: %s\n", req.queueName);
 	if (req.queueName) {
 		strcat(path, "/");
 		strcat(path, req.queueName);
 	}
 
 	char *nodeIdStr = NULL;
-	if (req.nodeId) {
+	if (req.nodeId > 0) {
 		int length = (int)((ceil(log10(req.nodeId)) + 1) * sizeof(char));
 		nodeIdStr = (char *) mem_alloc(length);
 		sprintf(nodeIdStr, "%d", req.nodeId);
@@ -49,7 +48,6 @@ struct persist_response persist_dispatch(struct persist_request req)
 		if (!persist_remove_queue(path)) {
 			res.success = false;
 			res.errorMessage = create_error_message("Error removing queue: ", strerror(errno));
-			// fprintf(stderr, "Error removing queue: %s\n", strerror(errno));
 		}
 	}
 	else if (req.type == PERSIST_READ_QUEUE) {
@@ -108,7 +106,7 @@ struct persist_response persist_dispatch(struct persist_request req)
 	}
 	else {
 		res.success = false;
-		res.errorMessage = "Persistence request type not recognized.";
+		res.errorMessage = create_error_message("Error: ", "Persistence request type not recognized.");
 	}
 
 	mem_free(nodeIdStr);
@@ -186,6 +184,7 @@ static unsigned int *get_next_node_id(const char *path)
 		} else {
 			*nextId = 1;
 		}
+		mem_free(queue);
 		return nextId;
 	}
 
@@ -298,13 +297,7 @@ static int *read_queue(const char *path)
 
 	while ((ent = readdir(dir)) != NULL) {
 		if (atoi(ent->d_name) != 0) {
-			if (nodeList == NULL) {
-				nodeList = (int *) mem_alloc(sizeof(int));
-			}
-			else {
-				nodeList = (int *) realloc(nodeList, sizeof(int) * (count + 1));
-			}
-
+			nodeList = (int *) realloc(nodeList, sizeof(int) + (sizeof(int) * (count + 1)));
 			nodeList[++count] = atoi(ent->d_name);
 		}
 	}
@@ -348,9 +341,4 @@ static bool persist_remove_queue(const char *path)
 		return false;
 
 	return true;
-}
-
-void persist_destruct(Persist *persist)
-{
-    mem_free(persist);
 }
