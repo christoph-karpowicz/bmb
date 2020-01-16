@@ -42,7 +42,7 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
     if (resNeedsQueue) {
         queue = queue_pool_get_by_name(this->queuePool, broker_req.queueName);
         if (broker_req.queueName == NULL) {
-            errMsg = "Request is missing queue name.";
+            errMsg = "Request is missing the queue name.";
         }
         else if (strcmp(broker_req.queueName, "") == 0) {
             errMsg = "Empty queue name given.";
@@ -57,7 +57,7 @@ struct broker_response broker_dispatch(Broker *this, struct broker_request broke
     }
 
     if (resNeedsData && (broker_req.data == NULL || strcmp(broker_req.data, "") == 0)) {
-        errMsg = "Request is missing data.";
+        errMsg = "Request is missing the data.";
     }
 
     if (errMsg != NULL) {
@@ -418,7 +418,7 @@ static struct broker_response remove_queue(Broker *this, struct broker_request r
 
     Queue *queue = queue_pool_get_by_name(this->queuePool, req.queue->name);
     if (queue == NULL) {
-        msg = "Failed: Queue with given name doesn't exist.";
+        msg = "Failed: Queue with the given name doesn't exist.";
         goto createResponse;
     }
 

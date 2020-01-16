@@ -2,7 +2,6 @@
 
 Response *Response_new(Request *req, Broker *broker) 
 {
-
     Response *newResponse = (Response *) mem_alloc(sizeof(Response));
 
     // Assign methods.
@@ -18,12 +17,10 @@ Response *Response_new(Request *req, Broker *broker)
 
     newResponse->construct(newResponse, req, broker);
     return newResponse;
-
 }
 
 static void Response_construct(void *this, Request *req, Broker *broker) 
 {
-
     printf("Response constructor called.\n");
     ((Response *)this)->status      = NULL;
     ((Response *)this)->headers     = NULL;
@@ -32,12 +29,10 @@ static void Response_construct(void *this, Request *req, Broker *broker)
     ((Response *)this)->json_body   = cJSON_CreateObject();
     ((Response *)this)->req         = req;
     ((Response *)this)->res_string  = NULL;
-
 }
 
 static void Response_assemble(const void *this)
 {
-
     printf("assembling response... ");
     Response *self = (Response *)this;
     unsigned short int headers_length = 0;
@@ -90,6 +85,7 @@ static void Response_handle(const void *this)
     Response *self          = (Response *)this;
     const Request *req      = self->req;
     struct broker_response  broker_res;
+    char                    *errMsg;
 
     self->setHeaders(this);
     printf("headers added... ");
@@ -97,6 +93,7 @@ static void Response_handle(const void *this)
     if (req == NULL)
     {
         self->setStatus(this, 400);
+        errMsg = "Empty request received.";
         goto errorResponse;
     }
 
@@ -112,6 +109,7 @@ static void Response_handle(const void *this)
     char *json_response_string = cJSON_Print(self->json_body);
     if (json_response_string == NULL) {
         self->setStatus(this, 500);
+        errMsg = "Failed to create final JSON response.";
         goto errorResponse;
     }
 
@@ -125,7 +123,7 @@ static void Response_handle(const void *this)
     
     errorResponse:
     printf("error response added... ");
-    self->setError(self, "Failed to create final JSON response.");
+    self->setError(self, errMsg);
     
     return;
 }

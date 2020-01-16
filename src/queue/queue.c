@@ -69,14 +69,13 @@ bool Queue_add(Queue *this, Node *rt)
 
 void Queue_clear(Queue *this)
 {
-
     if (_Queue.isEmpty(this)) return;
 
     printf("Clearing queue...\n");
 
     int queueSize = _Queue.size(this);
     
-    Node **asArray = (Node **) mem_alloc(sizeof(Node *) * queueSize);
+    Node *asArray[queueSize];
 
     Node *el = this->root;
     int i = 0;
@@ -93,8 +92,6 @@ void Queue_clear(Queue *this)
         printf("clearing: %d: %s \n", j, _Node.getMessage(asArray[j]));
         _Node.destruct(asArray[j]);
     }
-
-    mem_free(asArray);
 
 }
 

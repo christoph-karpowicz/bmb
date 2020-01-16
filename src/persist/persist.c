@@ -1,12 +1,22 @@
 #include "persist.h"
 
 /* 
-	Persistence request types:
-	1 - add queue
-	2 - remove queue
-	3 - load queue
-	4 - add node
-	5 - remove node
+persist_dispatch: 
+1. recevies request structs,
+2. checks if the request contains all the necessary data,
+3. casts the request data to an appropriate data type,
+4. calls the right persistence function based on the received request type,
+5. returns a response struct.
+
+Persistence request types:
+ADD_QUEUE       1
+REMOVE_QUEUE    2
+READ_QUEUE      3
+GET_QUEUE_LIST  4
+ADD_NODE        5
+REMOVE_NODE     6
+READ_NODE       7
+GET_NEXT_ID     8
 */
 struct persist_response persist_dispatch(struct persist_request req)
 {
@@ -33,9 +43,7 @@ struct persist_response persist_dispatch(struct persist_request req)
 
 	char *nodeIdStr = NULL;
 	if (req.nodeId > 0) {
-		int length = (int)((ceil(log10(req.nodeId)) + 1) * sizeof(char));
-		nodeIdStr = (char *) mem_alloc(length);
-		sprintf(nodeIdStr, "%d", req.nodeId);
+		nodeIdStr = int_to_string(req.nodeId);
 	}
 
     if (req.type == PERSIST_ADD_QUEUE) {
@@ -133,6 +141,11 @@ static char *create_error_message(const char *part1, const char *part2)
 	return errMsg;
 }
 
+/* 
+create_node_file creates a new file in a queue directory, which:
+1. is named with the node's id,
+2. contains the nodes message.
+*/
 static bool create_node_file(const char *path, const char *name, const char *content)
 {
 	FILE *fp = NULL;
@@ -151,6 +164,11 @@ static bool create_node_file(const char *path, const char *name, const char *con
 	return false;
 }
 
+/*
+create_queue_dir creates a new directory in the 'data' directory, which:
+1. is named with the queue's name,
+2. will contain created by create_node_file function.
+*/
 static bool create_queue_dir(const char *path)
 {
     bool success 	= true;
@@ -171,6 +189,10 @@ static bool create_queue_dir(const char *path)
     return success;
 }
 
+/* 
+get_next_node_id gets the given queue's last node file name 
+	and returns an id for the next node by adding 1 to it.
+*/
 static unsigned int *get_next_node_id(const char *path)
 {
 	const size_t queueLength = get_queue_length(path);
@@ -209,6 +231,10 @@ static size_t get_queue_length(const char *path)
 	return count;
 }
 
+/*
+get_queue_list returns a dynamically allocated array
+	with names of all the queues (directories in the 'data' folder).
+*/
 static void **get_queue_list()
 {
 	DIR *dir = check_dir("./data");
@@ -237,6 +263,9 @@ static void **get_queue_list()
 	return queueList;
 }
 
+/*
+read_node reads and returns the nodes content (message) from a node file.
+*/
 static char *read_node(const char *path, const char *name)
 {
 	FILE *fp = NULL;
@@ -286,6 +315,11 @@ static bool remove_node(const char *path, const char *name)
 	return true;
 }
 
+/*
+read_queue returns a dynamically allocated array of
+	node file ids from a given queue directory name.
+	It's an (int *) array because node's ids are always integers.
+*/
 static int *read_queue(const char *path)
 {
 	DIR *dir = check_dir(path);
@@ -322,15 +356,15 @@ static bool persist_remove_queue(const char *path)
 	if (!dir) return NULL;
 
 	int *nodeFileArr = read_queue(path);
-
 	const size_t queueLength = get_queue_length(path);
 
-	for (size_t i = 0; i < queueLength; i++) {
-		int length = (int)((ceil(log10(nodeFileArr[i])) + 1) * sizeof(char));
-		char *nodeIdStr = (char *) mem_alloc(length);
-		sprintf(nodeIdStr, "%d", nodeFileArr[i]);
+	for (size_t i = 1; i <= queueLength; i++) {
+		char *nodeIdStr = int_to_string(nodeFileArr[i]);
+		bool nodeRemoved = remove_node(path, nodeIdStr);
 
-		if (!remove_node(path, nodeIdStr)) {
+		mem_free(nodeIdStr);
+		
+		if (!nodeRemoved) {
 			return false;
 		}
 	}

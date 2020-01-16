@@ -15,7 +15,7 @@ void *socketThread(void *args)
     recv(*newSocketPtr, msg, CLIENT_MESSAGE_SIZE, 0);
     
     // Receive and parse request.
-    // printf("Req:\n%s\n", msg);
+    printf("Req:\n%s\n", msg);
     Request *req = Request_parse(msg);
 
     Response *res = Response_new(req, server->broker);

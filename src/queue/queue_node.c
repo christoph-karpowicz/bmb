@@ -30,7 +30,7 @@ Node *Node_new(unsigned int id)
 
 void Node_clear_message(Node *this) 
 {
-    if (this->message != NULL)
+    if (this->message)
         mem_free(this->message);
 }
 

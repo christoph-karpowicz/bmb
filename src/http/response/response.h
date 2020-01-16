@@ -22,7 +22,7 @@
 #define STATUS_500 "500 Internal Server Error"
 #define HEADER_ALLOW_ORIGIN "Access-Control-Allow-Origin: *"
 #define HEADER_CONNECTION_CLOSE "Connection: close"
-#define HEADER_CONTENT_TYPE "Content-type: text/html; charset=UTF-8"
+#define HEADER_CONTENT_TYPE "Content-type: text/plain; charset=UTF-8"
 #define HEADER_HOST "Host: localhost:8080"
 
 typedef struct response 

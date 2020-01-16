@@ -50,11 +50,11 @@ static void queue_pool_clear_nulls(QueuePool *this)
         }
     }
 
-    this->length = this->length - 2;
+    this->length = this->length - nullCount;
     if (this->length < 0) exit(1);
 
-    if (this->length == 0) 
-        this->pool = NULL;
+    if (this->length == 0)
+        mem_free(this->pool);
     else
         this->pool = (Queue **) realloc(this->pool, sizeof(Queue*) * this->length);
 
@@ -154,16 +154,16 @@ void queue_pool_load(QueuePool *this)
     printf("Queue pool loaded.\n\n");
 }
 
-
 bool queue_pool_remove_by_name(QueuePool *this, const char *name)
 {
     struct persist_request preq = {PERSIST_REMOVE_QUEUE, name, 0, NULL};
     struct persist_response pres = persist_dispatch(preq);
     if (!pres.success) {
         fprintf(stderr, "%s\n", pres.errorMessage);
+        mem_free(pres.errorMessage);
         return false;
     }
-    
+
     for (size_t i = 0; i < this->length; i++) {
         if (strcmp(this->pool[i]->name, name) == 0) {
             _Queue.clear(this->pool[i]);
