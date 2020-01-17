@@ -2,11 +2,11 @@
 
 /* 
 persist_dispatch: 
-1. recevies request structs,
+1. recevies persistence request structs,
 2. checks if the request contains all the necessary data,
 3. casts the request data to an appropriate data type,
 4. calls the right persistence function based on the received request type,
-5. returns a response struct.
+5. returns a persistence response struct.
 
 Persistence request types:
 ADD_QUEUE       1
