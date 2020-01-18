@@ -22,8 +22,12 @@ const char needsData[3][12] = {
     BROKER_ADD_QUEUE,
 };
 
-
-// broker_init is a Broker struct constructor function.
+/**
+ * broker_init - a Broker struct constructor function.
+ * 
+ * RETURNS:
+ * a Broker struct pointer with initialized queue pool
+ */
 Broker *broker_init()
 {
     Broker *broker = (Broker *) mem_alloc(sizeof(Broker));
@@ -162,11 +166,15 @@ static struct broker_response add_queue(Broker *this, struct broker_request req)
     return res;
 }
 
-/*
-consume consumes the next nodes the a given queue
-    this action causes the consumed node to get removed from the queue
-    consumed node is returned to the user
-*/
+/**
+ * consume - consumes the next nodes the a given queue.
+ * This action causes the consumed node to get removed from the queue.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * consumed node
+ */
 static struct broker_response consume(Broker *this, struct broker_request req)
 {
     struct broker_response res;
@@ -198,13 +206,14 @@ static struct broker_response consume(Broker *this, struct broker_request req)
     return res;
 }
 
-/*
-create_response:
-1. JSON strigifies received response data,
-2. creates and returns a new broker_response struct
-    which can be returned by broker_dispatch.
-- used in every broker action function
-*/
+/**
+ * create_response - used in every broker action, JSON strigifies received response data.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct.
+ */
 static struct broker_response create_response(bool success, unsigned short int code, char *message, char *data, char *errorMessage)
 {
     struct broker_response res;
@@ -258,7 +267,14 @@ static struct broker_response create_response(bool success, unsigned short int c
     return res;
 }
 
-// get finds and peeks a queue node message with the given index.
+/**
+ * get - finds and peeks a queue node message with the given index.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct.
+ */
 static struct broker_response get(Broker *this, struct broker_request req)
 {
     struct broker_response res;
@@ -287,10 +303,14 @@ static struct broker_response get(Broker *this, struct broker_request req)
     return res;
 }
 
-/*
-get_all peeks all nodes in a given queue
-    returned broker_response struct contains a JSON array with all found nodes.
-*/
+/**
+ * get_all - peeks all nodes in a given queue.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct, containing a JSON array with all found nodes.
+ */
 static struct broker_response get_all(Broker *this, struct broker_request req)
 {
     struct broker_response res;
@@ -352,10 +372,14 @@ static struct broker_response get_all(Broker *this, struct broker_request req)
     return res;
 }
 
-/*
-get_all_queue_names gets all queue names
-    returned broker_response struct contains a JSON array with all queue names.
-*/
+/**
+ * get_all_queue_names - gets all queue names.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct, containing a JSON array with all queue names.
+ */
 static struct broker_response get_all_queue_names(Broker *this, struct broker_request req)
 {
     struct broker_response res;
@@ -415,7 +439,14 @@ static struct broker_response get_all_queue_names(Broker *this, struct broker_re
     return res;
 }
 
-// length gets the number of nodes a given queue contains. 
+/**
+ * length - gets the number of nodes a given queue contains. 
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct
+ */
 static struct broker_response length(Broker *this, struct broker_request req)
 {
     struct broker_response  res;
@@ -438,7 +469,14 @@ static struct broker_response length(Broker *this, struct broker_request req)
     return res;
 }
 
-// produce adds a new node to a given queue.
+/**
+ * produce - adds a new node to a given queue.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct
+ */
 static struct broker_response produce(Broker *this, struct broker_request req)
 {
     struct persist_request persist_req = {PERSIST_GET_NEXT_ID, req.queue->name, 0, NULL};
@@ -465,7 +503,14 @@ static struct broker_response produce(Broker *this, struct broker_request req)
     return res;
 }
 
-// remove_queue removes queue with a given name from the queue pool using queue pool functions.
+/**
+ * remove_queue - removes queue with a given name from the queue pool using queue pool functions.
+ * @this: broker struct
+ * @broker_req: request passed from broker_dispatch
+ * 
+ * RETURNS:
+ * a new broker_response struct
+ */
 static struct broker_response remove_queue(Broker *this, struct broker_request req)
 {
     struct broker_response res;

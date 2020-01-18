@@ -1,5 +1,15 @@
 #include "request.h"
 
+/**
+ * Request_parse - parses a request string
+ * 1. extracts an http method,
+ * 2. extracts the GET/POST params from the request,
+ * 3. adds and stores all extracted param=>value pairs in a RequestBody struct.
+ * @req: http request string read from a socket
+ * 
+ * RETURNS:
+ * new Request struct for further processing
+ */
 Request *Request_parse(const char *req) 
 {
     printf("Parsing request... ");
@@ -53,6 +63,14 @@ Request *Request_parse(const char *req)
     return request;
 }
 
+/**
+ * Request_extract_data - used by Request_parse, extracts the GET/POST params from the request.
+ * @request: http request string passed from Request_parse
+ * @key: param name
+ * 
+ * RETURNS:
+ * new RequestPair (param => value)
+ */
 static RequestPair *Request_extract_data(const char *request, const char *key) 
 {
 
@@ -119,6 +137,13 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
 
 }
 
+/**
+ * Request_extract_method - extracts an http method.
+ * @request: http request string passed from Request_parse
+ * 
+ * RETURNS:
+ * http method as string
+ */
 static char *Request_extract_method(const char *request) 
 {
 

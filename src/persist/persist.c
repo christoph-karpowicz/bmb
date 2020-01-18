@@ -1,23 +1,25 @@
 #include "persist.h"
 
-/* 
-persist_dispatch: 
-1. recevies persistence request structs,
-2. checks if the request contains all the necessary data,
-3. casts the request data to an appropriate data type,
-4. calls the right persistence function based on the received request type,
-5. returns a persistence response struct.
-
-Persistence request types:
-ADD_QUEUE       1
-REMOVE_QUEUE    2
-READ_QUEUE      3
-GET_QUEUE_LIST  4
-ADD_NODE        5
-REMOVE_NODE     6
-READ_NODE       7
-GET_NEXT_ID     8
-*/
+/**
+ * persist_dispatch - 
+ * 1. checks if the request contains all the necessary data,
+ * 2. casts the request data to an appropriate data type,
+ * 3. calls the right persistence function based on the received request type.
+ * @req: persistence request passed response handler
+ * 
+ * RETURNS:
+ * a persistence response struct
+ * 
+ * Persistence request types:
+ * ADD_QUEUE       1
+ * REMOVE_QUEUE    2
+ * READ_QUEUE      3
+ * GET_QUEUE_LIST  4
+ * ADD_NODE        5
+ * REMOVE_NODE     6
+ * READ_NODE       7
+ * GET_NEXT_ID     8
+ */
 struct persist_response persist_dispatch(struct persist_request req)
 {
 	struct persist_response res = {NULL, true, NULL};
@@ -141,11 +143,17 @@ static char *create_error_message(const char *part1, const char *part2)
 	return errMsg;
 }
 
-/* 
-create_node_file creates a new file in a queue directory, which:
-1. is named with the node's id,
-2. contains the nodes message.
-*/
+/**
+ * create_node_file - creates a new file in a queue directory, which:
+ * 1. is named with the node's id,
+ * 2. contains the nodes message.
+ * @path: path to the queue directory
+ * @name: new node (and therefore file) name
+ * @content: node's message
+ * 
+ * RETURNS:
+ * bool indicating whether the operation was successful
+ */
 static bool create_node_file(const char *path, const char *name, const char *content)
 {
 	FILE *fp = NULL;
@@ -164,11 +172,15 @@ static bool create_node_file(const char *path, const char *name, const char *con
 	return false;
 }
 
-/*
-create_queue_dir creates a new directory in the 'data' directory, which:
-1. is named with the queue's name,
-2. will contain created by create_node_file function.
-*/
+/**
+ * create_queue_dir - creates a new directory in the 'data' directory, which:
+ * 1. is named with the queue's name,
+ * 2. will contain created by create_node_file function.
+ * @path: path to the new queue directory
+ * 
+ * RETURNS:
+ * bool indicating whether the operation was successful (true if directory already exists)
+ */
 static bool create_queue_dir(const char *path)
 {
     bool success 	= true;
@@ -189,10 +201,14 @@ static bool create_queue_dir(const char *path)
     return success;
 }
 
-/* 
-get_next_node_id gets the given queue's last node file name 
-	and returns an id for the next node by adding 1 to it.
-*/
+/**
+ * get_next_node_id - gets the given queue's last node file name 
+ * and returns an id for the next node by adding 1 to it.
+ * @path: path to the queue directory
+ * 
+ * RETURNS:
+ * next node id
+ */
 static unsigned int *get_next_node_id(const char *path)
 {
 	const size_t queueLength = get_queue_length(path);
@@ -231,10 +247,12 @@ static size_t get_queue_length(const char *path)
 	return count;
 }
 
-/*
-get_queue_list returns a dynamically allocated array
-	with names of all the queues (directories in the 'data' folder).
-*/
+/**
+ * get_queue_list
+ * 
+ * RETURNS:
+ * a dynamically allocated array with names of all the queues (directories in the 'data' folder).
+ */
 static void **get_queue_list()
 {
 	DIR *dir = check_dir("./data");
@@ -263,9 +281,14 @@ static void **get_queue_list()
 	return queueList;
 }
 
-/*
-read_node reads and returns the nodes content (message) from a node file.
-*/
+/**
+ * read_node
+ * @path: path to the queue directory
+ * @name: node's name (id)
+ * 
+ * RETURNS:
+ * the nodes content (message) from a node file
+ */
 static char *read_node(const char *path, const char *name)
 {
 	FILE *fp = NULL;
@@ -315,11 +338,15 @@ static bool remove_node(const char *path, const char *name)
 	return true;
 }
 
-/*
-read_queue returns a dynamically allocated array of
-	node file ids from a given queue directory name.
-	It's an (int *) array because node's ids are always integers.
-*/
+/**
+ * read_queue 
+ * @path: path to the queue directory
+ * 
+ * RETURNS:
+ * a dynamically allocated array of node file ids from a given queue directory name.
+ * 
+ * It's an (int *) array because node's ids are always integers.
+ */
 static int *read_queue(const char *path)
 {
 	DIR *dir = check_dir(path);
@@ -340,10 +367,6 @@ static int *read_queue(const char *path)
 	int *nodeListSlice = nodeList + 1;
 	if (count > 0)
 		nodeListSlice = sort_int_array_asc(nodeListSlice, count);
-
-	// for (size_t i = 0; i < count; i++) {
-	// 	printf("%d\n", nodeListSlice[i]);
-	// }
 
 	nodeList[0] = count;
 

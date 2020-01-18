@@ -1,8 +1,14 @@
 #include "request_body.h"
 
+/**
+ * RequestBody_new - RequestBody struct constructor.
+ * This struct stores param=>value pairs extracted from an http request.
+ * 
+ * RETURNS:
+ * new RequestBody struct
+ */
 RequestBody *RequestBody_new()
 {
-
     RequestBody *newRequestBody = (RequestBody *) mem_alloc(sizeof(RequestBody));
 
     // Assign properties.
@@ -17,9 +23,13 @@ RequestBody *RequestBody_new()
     printf("Request body created... ");
 
     return newRequestBody;
-
 }
 
+/**
+ * RequestBody_add - adds a new RequestPair to the struct.
+ * @this: RequestBody to which a pair i being added
+ * @pair: added pair
+ */
 void RequestBody_add(void *this, RequestPair *pair)
 {
 
@@ -37,6 +47,14 @@ void RequestBody_add(void *this, RequestPair *pair)
 
 }
 
+/**
+ * RequestBody_get - finds a pair by param name.
+ * @this: RequestBody to which a pair i being added
+ * @key: param name
+ * 
+ * RETURNS:
+ * param value
+ */
 const char *RequestBody_get(void *this, const char *key)
 {
 
@@ -62,7 +80,6 @@ void RequestBody_destruct(void *this)
     {
         if (self->pairs[i] != NULL)
         {
-            // printf("free pair %s\n", self->pairs[i]->getKey(self->pairs[i]));
             self->pairs[i]->destruct(self->pairs[i]);
         }
     }

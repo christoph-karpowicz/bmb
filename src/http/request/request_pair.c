@@ -1,5 +1,14 @@
 #include "request_pair.h"
 
+/**
+ * RequestPair_new - RequestPair struct constructor,
+ * represents a single param => value pair extracted from an http request.
+ * @key: param name
+ * @value: param value
+ * 
+ * RETURNS:
+ * new RequestPair struct
+ */
 RequestPair *RequestPair_new(const char *key, char *value)
 {
 
