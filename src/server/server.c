@@ -8,8 +8,14 @@ void Server_error(const char *msg)
     exit(1);
 }
 
+/**
+ * Server_accept - creates a new connected socket for the incoming connection.
+ * @s: server instance
+ * 
+ * RETURNS:
+ * was the connected socket created successfully
+ */
 bool Server_accept(Server *s) {
-    // Accept call creates a new socket for the incoming connection.
     s->addr_size = sizeof s->serverStorage;
     s->newSocket = accept(s->socket, (struct sockaddr *) &s->serverStorage, &s->addr_size);
     if (s->newSocket < 0) {
@@ -20,9 +26,14 @@ bool Server_accept(Server *s) {
     return true;
 }
 
+/**
+ * Server_bind - binds the address struct to the socket.
+ * @s: server instance
+ * 
+ * RETURNS:
+ * was an address successfully bound to the socket
+ */
 bool Server_bind(const Server *s) {
-    
-    // Bind the address struct to the socket.
     if (bind(s->socket, (struct sockaddr *) &s->serverAddr, sizeof(s->serverAddr)) < 0) {
         s->error("ERROR on binding");
         return false;
@@ -31,6 +42,14 @@ bool Server_bind(const Server *s) {
     
 }
 
+/**
+ * Server_create_socket - creates an endpoint for communication
+ * and assigns a file descriptor to the socket Server struct member.
+ * @s: server instance
+ * 
+ * RETURNS:
+ * was the socket created successfully
+ */
 bool Server_create_socket(Server *s) {
 
     s->socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -43,6 +62,14 @@ bool Server_create_socket(Server *s) {
 
 }
 
+/**
+ * Server_init - initializes a server instance.
+ * @s: server instance
+ * 
+ * Assigns socket address struct members,
+ * creates a broker instance and
+ * starts the connection count.
+ */
 void Server_init(Server *s) {
     
     // Assign methods.

@@ -17,6 +17,13 @@
 #include "util/util.h"
 #include "util/mem.h"
 
+/**
+ * close_signal_handler - function called after the 
+ * application receives a SIGINT signal.
+ * @sig: signal
+ * 
+ * Cleanup before closing the app with ctrl+c.
+ */
 void close_signal_handler(int sig)
 {
     if (server_ptr == NULL) exit(1);
@@ -42,7 +49,6 @@ void close_signal_handler(int sig)
     else {
         signal(SIGINT, close_signal_handler);
     }
-    // getchar();
 }
 
 int main() {
@@ -56,7 +62,7 @@ int main() {
 
     server_ptr = &server;
 
-    //Listen on the socket, with 50 max connection requests queued 
+    // Listen on the socket, with 50 max connection requests queued.
     if (listen(server.socket, 50) == 0)
         printf("Listening\n");
     else

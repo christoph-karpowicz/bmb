@@ -27,7 +27,7 @@ RequestBody *RequestBody_new()
 
 /**
  * RequestBody_add - adds a new RequestPair to the struct.
- * @this: RequestBody to which a pair i being added
+ * @this: RequestBody to which a pair is being added
  * @pair: added pair
  */
 void RequestBody_add(void *this, RequestPair *pair)

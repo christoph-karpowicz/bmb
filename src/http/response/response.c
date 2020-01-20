@@ -1,5 +1,16 @@
 #include "response.h"
 
+/**
+ * Response_new - Response struct constructor.
+ * @req: Request struct with http data and method
+ * @broker: broker API
+ * 
+ * This struct processes the http request 
+ * and gathers the requested data from the broker.
+ * 
+ * RETURNS:
+ * new Response struct
+ */
 Response *Response_new(Request *req, Broker *broker) 
 {
     Response *newResponse = (Response *) mem_alloc(sizeof(Response));
@@ -19,6 +30,7 @@ Response *Response_new(Request *req, Broker *broker)
     return newResponse;
 }
 
+// @todo: to be removed
 static void Response_construct(void *this, Request *req, Broker *broker) 
 {
     printf("Response constructor called.\n");
@@ -31,6 +43,10 @@ static void Response_construct(void *this, Request *req, Broker *broker)
     ((Response *)this)->res_string  = NULL;
 }
 
+/**
+ * Response_assemble - joins headers, status and the response body.
+ * @this: Response instance
+ */
 static void Response_assemble(const void *this)
 {
     printf("assembling response... ");
@@ -51,14 +67,28 @@ static void Response_assemble(const void *this)
     }
     strcat(self->res_string, self->body);
     printf("assembling done... \n");
-    
 }
 
+/**
+ * Response_get
+ * @this: Response instance
+ * 
+ * RETURNS:
+ * http response string
+ */
 static char *Response_get(const void *this)
 {
     return ((Response *)this)->res_string; 
 }
 
+/**
+ * Response_get_response - sends a request to the broker API.
+ * @this: Response instance
+ * 
+ * RETURNS:
+ * broker_response struct contaning the requested data
+ * or a result of an action on one of the queues.
+ */
 static struct broker_response Response_get_response(const void *this)
 {
     Response *self          = (Response *)this;
@@ -75,9 +105,17 @@ static struct broker_response Response_get_response(const void *this)
     res = broker_dispatch(self->broker, broker_req);
 
     return res;
-
 }
 
+/**
+ * Response_handle - main method, doing most of the response creation work.
+ * @this: Response instance
+ * 
+ * Makes sure that the request struct was creates successfully, 
+ * adds headers to the final result,
+ * queries teh broker API
+ * creates a JSON body with received data.
+ */
 static void Response_handle(const void *this)
 {
     printf("Creating response... ");
@@ -128,6 +166,11 @@ static void Response_handle(const void *this)
     return;
 }
 
+/**
+ * Response_set_error - sets an error message in the response body.
+ * @this: Response instance
+ * @errorMessage: error string
+ */
 static void Response_set_error(const void *this, char *errorMessage)
 {
     Response *self  = (Response *)this;
@@ -139,9 +182,12 @@ static void Response_set_error(const void *this, char *errorMessage)
     strcpy(self->body, errorMessage);
 }
 
+/**
+ * Response_set_headers - sets a fixed number of headers to the response.
+ * @this: Response instance
+ */
 static void Response_set_headers(const void *this)
 {
-
     Response *self = (Response *)this;
 
     self->headers_count = 5;
@@ -176,12 +222,15 @@ static void Response_set_headers(const void *this)
     self->headers[4] = (char *) mem_alloc(strlen(date) + 1);
     strcpy(self->headers[4], date);
     mem_free(date);
-
 }
 
+/**
+ * Response_set_status - sets the http response code.
+ * @this: Response instance
+ * @code: http response code
+ */
 static void Response_set_status(const void *this, unsigned short int code)
 {
-
     char                *status_txt;
     Response *self =    (Response *)this;
 
@@ -207,7 +256,6 @@ static void Response_set_status(const void *this, unsigned short int code)
     strcat(self->status, " ");
     strcat(self->status, status_txt);
     printf("status %d set... ", code);
-   
 }
 
 static void Response_destruct(void *this)

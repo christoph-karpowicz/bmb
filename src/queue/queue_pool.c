@@ -1,5 +1,13 @@
 #include "queue_pool.h"
 
+/**
+ * queue_pool_init - QueuePool struct constructor.
+ * 
+ * This struct stores pointers to all queues in the app. 
+ * 
+ * RETURNS:
+ * new QueuePool struct
+ */
 QueuePool *queue_pool_init() 
 {
     QueuePool *newQueuePool = (QueuePool *) mem_alloc(sizeof(QueuePool));
@@ -8,6 +16,15 @@ QueuePool *queue_pool_init()
     return newQueuePool;
 }
 
+/**
+ * queue_pool_add - adds a new queue to the pool.
+ * @this: QueuePool instance
+ * @name: new queue's name
+ * @init: is this function called on app startup
+ * 
+ * RETURNS:
+ * was the action successful
+ */
 bool queue_pool_add(QueuePool *this, const char *name, const bool init)
 {
     Queue *newQueue = Queue_new(name);
@@ -37,6 +54,13 @@ bool queue_pool_add(QueuePool *this, const char *name, const bool init)
     return true;
 }
 
+/**
+ * queue_pool_clear_nulls - removes NULL pointers from the pool.
+ * @this: QueuePool instance
+ * 
+ * Gets called whenever a queue has been removed from the pool.
+ * Shrinks the pool array.
+ */
 static void queue_pool_clear_nulls(QueuePool *this)
 {
     size_t nullCount    = 0;
@@ -63,6 +87,13 @@ static void queue_pool_clear_nulls(QueuePool *this)
     }
 }
 
+/**
+ * queue_pool_get_all_names
+ * @this: QueuePool instance
+ * 
+ * RETURNS:
+ * a dynamically allocated array of all queue names in the pool
+ */
 const char **queue_pool_get_all_names(QueuePool *this)
 {
     const char **queueNames = (const char **) mem_alloc(sizeof(const char *) * this->length);
@@ -72,6 +103,14 @@ const char **queue_pool_get_all_names(QueuePool *this)
     return queueNames;
 }
 
+/**
+ * queue_pool_get_by_name - gets a queue with a given name.
+ * @this: QueuePool instance
+ * @name: queue name
+ * 
+ * RETURNS:
+ * found queue pointer
+ */
 Queue *queue_pool_get_by_name(QueuePool *this, const char *name)
 {
     if (name == NULL) 
@@ -85,6 +124,13 @@ Queue *queue_pool_get_by_name(QueuePool *this, const char *name)
     return NULL;
 }
 
+/**
+ * queue_pool_load - loads the queue pool from the file system.
+ * @this: QueuePool instance
+ * 
+ * Called on app startup, uses the persistence API 
+ * to read all the queues into memory.
+ */
 void queue_pool_load(QueuePool *this)
 {
     printf("Loading queue pool...\n");
@@ -154,6 +200,13 @@ void queue_pool_load(QueuePool *this)
     printf("Queue pool loaded.\n\n");
 }
 
+/**
+ * queue_pool_remove_by_name - remove a queue with a given name from the pool.
+ * @this: QueuePool instance
+ * 
+ * RETURNS:
+ * was the action successful
+ */
 bool queue_pool_remove_by_name(QueuePool *this, const char *name)
 {
     struct persist_request preq = {PERSIST_REMOVE_QUEUE, name, 0, NULL};

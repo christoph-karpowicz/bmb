@@ -17,6 +17,15 @@ const struct queue_methods _Queue =
     .destruct = Queue_destruct
 };
 
+/**
+ * Queue_new - Queue struct constructor.
+ * @name: queue name
+ * 
+ * This struct is a linked list of Nodes. 
+ * 
+ * RETURNS:
+ * new Queue struct
+ */
 Queue *Queue_new(const char *name)
 {
     Queue *newQueue     = (Queue *) mem_alloc(sizeof(Queue));
@@ -28,6 +37,7 @@ Queue *Queue_new(const char *name)
     return newQueue;
 }
 
+// @todo: to be removed
 void Queue_construct(Queue *this, const char *name)
 {
     this->name = (char *) mem_alloc(strlen(name) + 1);
@@ -36,6 +46,16 @@ void Queue_construct(Queue *this, const char *name)
     printf("Queue \"%s\" created.\n", this->name);
 }
 
+/**
+ * Queue_add - adds a new node to the queue.
+ * @this: queue instance
+ * @rt: new node
+ * 
+ * The node added to the queue becomes the new root.
+ * 
+ * RETURNS:
+ * was the operation successful
+ */
 bool Queue_add(Queue *this, Node *rt)
 {
     if (this->persist) {
@@ -67,6 +87,10 @@ bool Queue_add(Queue *this, Node *rt)
     return true;
 }
 
+/**
+ * Queue_clear - removes all nodes from the queue.
+ * @this: queue instance
+ */
 void Queue_clear(Queue *this)
 {
     if (_Queue.isEmpty(this)) return;
@@ -95,6 +119,10 @@ void Queue_clear(Queue *this)
 
 }
 
+/**
+ * Queue_display_all - displays a list of all the nodes in the terminal.
+ * @this: queue instance
+ */
 void Queue_display_all(const Queue *this)
 {
 
@@ -115,6 +143,14 @@ void Queue_display_all(const Queue *this)
 
 }
 
+/**
+ * Queue_get - gets a node with the given index.
+ * @this: queue instance
+ * @index: node index
+ * 
+ * RETURNS:
+ * found Node pointer
+ */
 Node *Queue_get(const Queue *this, const int index)
 {
 
@@ -130,6 +166,14 @@ Node *Queue_get(const Queue *this, const int index)
 
 }
 
+/**
+ * Queue_get_next_tail - finds a pointer to a node 
+ * that's next to be the tail of the queue.
+ * @this: queue instance
+ * 
+ * RETURNS:
+ * new tail Node pointer
+ */
 Node *Queue_get_next_tail(const Queue *this)
 {
 
@@ -141,21 +185,51 @@ Node *Queue_get_next_tail(const Queue *this)
 
 }
 
+/**
+ * Queue_get_root 
+ * @this: queue instance
+ * 
+ * RETURNS:
+ * root Node pointer
+ */
 Node *Queue_get_root(const Queue *this)
 {
     return this->root;
 }
 
+/**
+ * Queue_is_empty - check if the queue's empty.
+ * @this: queue instance
+ * 
+ * RETURNS:
+ * is the queue empty
+ */
 bool Queue_is_empty(const Queue *this)
 {
     return _Queue.size(this) > 0 ? false : true;
 }
 
+/**
+ * Queue_peek - gets the tail node's pointer without
+ * removing it from the queue.
+ * @this: queue instance
+ * 
+ * RETURNS:
+ * tail Node pointer
+ */
 Node *Queue_peek(const Queue *this)
 {
     return this->tail;
 }
 
+/**
+ * Queue_poll - gets the tail node's pointer and
+ * removes the node from the queue.
+ * @this: queue instance
+ * 
+ * RETURNS:
+ * tail Node pointer
+ */
 Node *Queue_poll(Queue *this)
 {
     if (_Queue.isEmpty(this)) return NULL;
@@ -184,14 +258,23 @@ Node *Queue_poll(Queue *this)
 
 }
 
+/**
+ * Queue_reset - resets root and tail pointer to NULL.
+ * @this: queue instance
+ */
 void Queue_reset(Queue *this)
 {
-
     this->root = NULL;
     this->tail = NULL;
-
 }
 
+/**
+ * Queue_size - gets the queue's length.
+ * @this: queue instance
+ * 
+ * RETURNS:
+ * queue length
+ */
 int Queue_size(const Queue *this)
 {
 

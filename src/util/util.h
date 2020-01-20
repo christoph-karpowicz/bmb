@@ -14,7 +14,7 @@ bool in_str_array(const char *needle, const char haystack[6][12], size_t size);
 
 char *int_to_string(const int i);
 
-int is_hexadecimal(int x);
+bool is_hexadecimal(int x);
 
 int *sort_int_array_asc(int *arr, size_t size);
 
