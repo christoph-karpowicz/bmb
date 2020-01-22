@@ -51,11 +51,11 @@ The app responds with a JSON string:
 ```
 In the payload, both message and data are optional so responses can include only a message, only data or both depending on the operation carried out by the broker.
 
-Available requests and their payload results:
+### Available requests and their payload results:
 
-**Add queue**
-description: Adds a new queue.
-method: POST
+**Add queue**  
+description: Adds a new queue.  
+method: POST  
 request data: 
 ```
 {
@@ -63,12 +63,12 @@ request data:
     data: [new queue's name]
 }
 ```
-as query string: `type=addQueue&data=[new queue's name]`
+as query string: `type=addQueue&data=[new queue's name]`  
 response payload: message
 
-**Consume**
-description: Consumes a message from a queue. A node storing the message is removed from the queue and it's message gets sent to the client. 
-method: GET
+**Consume**  
+description: Consumes a message from a queue. A node storing the message is removed from the queue and it's message gets sent to the client.  
+method: GET  
 request data: 
 ```
 {
@@ -76,12 +76,12 @@ request data:
     queue: [queue name]
 }
 ```
-as query string: `type=consume&queue=[queue name]`
+as query string: `type=consume&queue=[queue name]`  
 response payload: `{ data: [consumed message] }`
 
-**Length**
-description: Gets the length of a queue (how many nodes it contains). 
-method: GET
+**Length**  
+description: Gets the length of a queue (how many nodes it contains).  
+method: GET  
 request data: 
 ```
 {
@@ -89,12 +89,12 @@ request data:
     queue: [queue name]
 }
 ```
-as query string: `type=length&queue=[queue name]`
+as query string: `type=length&queue=[queue name]`  
 response payload: `{ data: [queue length] }`
 
-**Get**
-description: Peeks a node with the specified index, in the specified queue. Peeking does not remove a node from the queue. 
-method: GET
+**Get**  
+description: Peeks a node with the specified index, in the specified queue. Peeking does not remove a node from the queue.  
+method: GET  
 request data: 
 ```
 {
@@ -103,12 +103,12 @@ request data:
     queue: [queue name]
 }
 ```
-as query string: `type=get&index=[node's index]&queue=[queue name]`
+as query string: `type=get&index=[node's index]&queue=[queue name]`  
 response payload: `{ data: [node's message] }`
 
-**Get all**
-description: Peeks all nodes from the specified queue. Peeking does not remove a node from the queue. 
-method: GET
+**Get all**  
+description: Peeks all nodes from the specified queue. Peeking does not remove a node from the queue.  
+method: GET  
 request data: 
 ```
 {
@@ -116,25 +116,25 @@ request data:
     queue: [queue name]
 }
 ```
-as query string: `type=getAll&queue=[queue name]`
-response payload: `{ data: { nodes: [an object array of all nodes from the queue]} }`
-Note: the above array of nodes consists on individual JSON objects: `{ index: [node's index in the queue], message: [node's message] }`
+as query string: `type=getAll&queue=[queue name]`  
+response payload: `{ data: { nodes: [an object array of all nodes from the queue]} }`  
+Note: the above array of nodes consists on individual JSON objects: `{ index: [node's index in the queue], message: [node's message] }`  
 
-**Get all queue names**
-description: Gets all the existing queue names.
-method: GET
+**Get all queue names**  
+description: Gets all the existing queue names.  
+method: GET  
 request data: 
 ```
 {
     type: "getAllQueueNames"
 }
 ```
-as query string: `type=getAllQueueNames`
+as query string: `type=getAllQueueNames`  
 response payload: `{ data: { queueNames: [a string array of all queue names]} }`
 
-**Produce**
-description: Produce na new message. This operation creates a new node holding a given message in the specified queue.
-method: POST
+**Produce**  
+description: Produce na new message. This operation creates a new node holding a given message in the specified queue.  
+method: POST  
 request data: 
 ```
 {
@@ -143,12 +143,12 @@ request data:
     data: [message]
 }
 ```
-as query string: `type=produce&queue=[queue name]&data=[message]`
+as query string: `type=produce&queue=[queue name]&data=[message]`  
 response payload: message
 
-**Remove queue**
-description: Removes the queue and all its nodes.
-method: GET
+**Remove queue**  
+description: Removes the queue and all its nodes.  
+method: GET  
 request data: 
 ```
 {
@@ -156,10 +156,10 @@ request data:
     queue: [queue name]
 }
 ```
-as query string: `type=removeQueue&queue=[queue name]`
+as query string: `type=removeQueue&queue=[queue name]`  
 response payload: message
 
 ## Built With
 
-gcc - the GNU Compiler Collection, v7.4.0 
+gcc - the GNU Compiler Collection, v7.4.0  
 [cJSON](https://github.com/DaveGamble/cJSON)
