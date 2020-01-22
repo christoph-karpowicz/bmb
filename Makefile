@@ -2,4 +2,7 @@ LIBS = -pthread -lnsl -lm -lcjson
 SRC = $(shell find ./src -name '*.c')
 
 main:
-	gcc -fsanitize=undefined $(SRC) -o app $(LIBS)
+	gcc $(SRC) -o bmb $(LIBS)
+
+dev:
+	gcc -fsanitize=undefined $(SRC) -o bmb $(LIBS)

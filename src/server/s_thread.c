@@ -37,7 +37,7 @@ void *socketThread(void *args)
     res->assemble(res);
 
     // printf("============\nReq:\n%s\n==========\n", msg);
-    printf("============\nRes:\n%s\n==========\n", res->get(res));
+    // printf("============\nRes:\n%s\n==========\n", res->get(res));
     if (req != NULL)
         Request_destruct(req);
 
