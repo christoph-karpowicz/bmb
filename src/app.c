@@ -18,16 +18,27 @@
 #include "util/mem.h"
 
 /**
+ * app_init - cleanup before closing the app.
+ */
+__attribute__((destructor))
+void app_close()
+{
+    if (server_ptr == NULL) return;
+    queue_pool_destruct(server_ptr->broker->queuePool);
+    printf("* request count: %d\n", server_ptr->requestCounter);
+    Server_destruct(server_ptr);
+    printf("* memory allocations: %d\n", mem_allocated);
+    printf("* memory freed: %d\n", mem_freed);
+    printf("========\n");
+}
+
+/**
  * close_signal_handler - function called after the 
  * application receives a SIGINT signal.
  * @sig: signal
- * 
- * Cleanup before closing the app with ctrl+c.
  */
 void close_signal_handler(int sig)
 {
-    if (server_ptr == NULL) exit(1);
-    
     char c;
 
     printf("\n========\n");
@@ -38,12 +49,6 @@ void close_signal_handler(int sig)
 
     c = getchar();
     if (c == 'y' || c == 'Y') {
-        queue_pool_destruct(server_ptr->broker->queuePool);
-        printf("* request count: %d\n", server_ptr->requestCounter);
-        Server_destruct(server_ptr);
-        printf("* memory allocations: %d\n", mem_allocated);
-        printf("* memory freed: %d\n", mem_freed);
-        printf("========\n");
         exit(1);
     }
     else {
@@ -51,8 +56,12 @@ void close_signal_handler(int sig)
     }
 }
 
-int main() {
-
+/**
+ * app_init - initializes the application, starts the socket server. 
+ */
+__attribute__((constructor))
+void app_init()
+{
     signal(SIGINT, close_signal_handler);
 
     Server server;
@@ -68,23 +77,25 @@ int main() {
     }
     else
         server.error("ERROR on listen attempt");
+}
 
+int main() {
     pthread_t tid[50];
     int i = 0;
-    
+
     while(1) {
         socket_thread_args args; 
 
-        Server_accept(&server);
+        Server_accept(server_ptr);
 
-        args.server = &server;
+        args.server = server_ptr;
         args.time_start = get_epoch_milis();
 
         // Create separate thread for received client request.
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
-            server.error("ERROR Failed to create thread");
+            server_ptr->error("ERROR Failed to create thread");
 
-        log("Request count: %d\n", server.requestCounter);
+        log("Request count: %d\n", server_ptr->requestCounter);
 
         if (i >= 50) {
             i = 0;
