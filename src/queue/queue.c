@@ -43,7 +43,7 @@ void Queue_construct(Queue *this, const char *name)
     this->name = (char *) mem_alloc(strlen(name) + 1);
     strcpy(this->name, name);
     _Queue.reset(this);
-    printf("Queue \"%s\" created.\n", this->name);
+    log("Queue \"%s\" created.\n", this->name);
 }
 
 /**
@@ -83,7 +83,7 @@ bool Queue_add(Queue *this, Node *rt)
     }
     this->root = rt;
 
-    // printf("========================\n%s\n", _Node.getMessage(rt));
+    // log("========================\n%s\n", _Node.getMessage(rt));
     return true;
 }
 
@@ -95,7 +95,7 @@ void Queue_clear(Queue *this)
 {
     if (_Queue.isEmpty(this)) return;
 
-    printf("Clearing queue...\n");
+    log("Clearing queue...\n");
 
     int queueSize = _Queue.size(this);
     
@@ -113,7 +113,7 @@ void Queue_clear(Queue *this)
 
     for (int j = 0; j < queueSize; j++)
     {
-        printf("clearing: %d: %s \n", j, _Node.getMessage(asArray[j]));
+        log("clearing: %d: %s \n", j, _Node.getMessage(asArray[j]));
         _Node.destruct(asArray[j]);
     }
 
@@ -128,7 +128,7 @@ void Queue_display_all(const Queue *this)
 
     if (_Queue.isEmpty(this)) 
     {
-        printf("----------------------\nQueue is empty.\n----------------------\n");
+        log("----------------------\nQueue is empty.\n----------------------\n");
         return;
     }
     
@@ -136,7 +136,7 @@ void Queue_display_all(const Queue *this)
     int i = 1;
     do  
     {
-        printf("----------------------\nMessage %d:\n%s\n\n", i, _Node.getMessage(el));
+        log("----------------------\nMessage %d:\n%s\n\n", i, _Node.getMessage(el));
         el = _Node.getNext(el);
         i++;
     } while (el != NULL);

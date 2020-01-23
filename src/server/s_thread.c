@@ -13,7 +13,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  */
 void *socketThread(void *args)
 {
-    printf("Socket thread opened.\n");
+    log("Socket thread opened.\n");
 
     socket_thread_args *arguments = (socket_thread_args*)args;
     Server *server =                arguments->server;
@@ -24,7 +24,7 @@ void *socketThread(void *args)
     recv(*newSocketPtr, msg, CLIENT_MESSAGE_SIZE, 0);
     
     // Receive and parse request.
-    printf("Req:\n%s\n", msg);
+    log("Req:\n%s\n", msg);
     Request *req = Request_parse(msg);
 
     Response *res = Response_new(req, server->broker);
@@ -36,8 +36,8 @@ void *socketThread(void *args)
     
     res->assemble(res);
 
-    // printf("============\nReq:\n%s\n==========\n", msg);
-    // printf("============\nRes:\n%s\n==========\n", res->get(res));
+    // log("============\nReq:\n%s\n==========\n", msg);
+    // log("============\nRes:\n%s\n==========\n", res->get(res));
     if (req != NULL)
         Request_destruct(req);
 
@@ -47,6 +47,6 @@ void *socketThread(void *args)
     // _Queue.displayAll(server->broker->queue);
     close(*newSocketPtr);
 
-    printf("Exit socket thread.\n");
+    log("Exit socket thread.\n");
     pthread_exit(NULL);
 }

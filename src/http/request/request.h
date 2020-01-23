@@ -9,6 +9,7 @@
 
 #include "request_body.h"
 #include "request_pair.h"
+#include "../../util/util.h"
 #include "../../util/mem.h"
 
 typedef struct request 

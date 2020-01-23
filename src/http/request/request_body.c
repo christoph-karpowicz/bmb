@@ -20,7 +20,7 @@ RequestBody *RequestBody_new()
     newRequestBody->get = &RequestBody_get;
     newRequestBody->destruct = &RequestBody_destruct;
 
-    printf("Request body created... ");
+    log("Request body created... ");
 
     return newRequestBody;
 }
@@ -43,7 +43,7 @@ void RequestBody_add(void *this, RequestPair *pair)
         self->pairs = (RequestPair **) realloc(self->pairs, pairsSize);
     }
     self->pairs[self->pairs_length - 1] = pair;
-    printf("%s added to request body... ", pair->getKey(pair));
+    log("%s added to request body... ", pair->getKey(pair));
 
 }
 

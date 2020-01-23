@@ -33,7 +33,7 @@ Response *Response_new(Request *req, Broker *broker)
 // @todo: to be removed
 static void Response_construct(void *this, Request *req, Broker *broker) 
 {
-    printf("Response constructor called.\n");
+    log("Response constructor called.\n");
     ((Response *)this)->status      = NULL;
     ((Response *)this)->headers     = NULL;
     ((Response *)this)->body        = NULL;
@@ -49,7 +49,7 @@ static void Response_construct(void *this, Request *req, Broker *broker)
  */
 static void Response_assemble(const void *this)
 {
-    printf("assembling response... ");
+    log("assembling response... ");
     Response *self = (Response *)this;
     unsigned short int headers_length = 0;
     for (unsigned short int i = 0; i < self->headers_count; i++) {
@@ -66,7 +66,7 @@ static void Response_assemble(const void *this)
         strcat(self->res_string, "\n");
     }
     strcat(self->res_string, self->body);
-    printf("assembling done... \n");
+    log("assembling done... \n");
 }
 
 /**
@@ -118,7 +118,7 @@ static struct broker_response Response_get_response(const void *this)
  */
 static void Response_handle(const void *this)
 {
-    printf("Creating response... ");
+    log("Creating response... ");
 
     Response *self          = (Response *)this;
     const Request *req      = self->req;
@@ -126,7 +126,7 @@ static void Response_handle(const void *this)
     char                    *errMsg;
 
     self->setHeaders(this);
-    printf("headers added... ");
+    log("headers added... ");
 
     if (req == NULL)
     {
@@ -135,7 +135,7 @@ static void Response_handle(const void *this)
         goto errorResponse;
     }
 
-    printf("recognized as %s... ", req->method);
+    log("recognized as %s... ", req->method);
 
     // Create response.
     broker_res = self->getResponse(this);
@@ -155,12 +155,12 @@ static void Response_handle(const void *this)
     self->body = (char *) mem_alloc(sizeof(char) * body_len);
     strcpy(self->body, json_response_string);
 
-    printf("body added... ");
+    log("body added... ");
 
     return;
     
     errorResponse:
-    printf("error response added... ");
+    log("error response added... ");
     self->setError(self, errMsg);
     
     return;
@@ -214,7 +214,7 @@ static void Response_set_headers(const void *this)
     if (ptm == NULL) {
         puts("The gmtime() function failed");
     }    
-    // printf("UTC time: %s", asctime(ptm));
+    // log("UTC time: %s", asctime(ptm));
     char *date_head = "Date: ";
     char *date = (char *) mem_alloc(strlen(date_head) + strlen(asctime(ptm)) + 1);
     strcpy(date, date_head);
@@ -255,7 +255,7 @@ static void Response_set_status(const void *this, unsigned short int code)
     strcpy(self->status, PROTOCOL);
     strcat(self->status, " ");
     strcat(self->status, status_txt);
-    printf("status %d set... ", code);
+    log("status %d set... ", code);
 }
 
 static void Response_destruct(void *this)

@@ -63,8 +63,9 @@ int main() {
     server_ptr = &server;
 
     // Listen on the socket, with 50 max connection requests queued.
-    if (listen(server.socket, 50) == 0)
-        printf("Listening\n");
+    if (listen(server.socket, 50) == 0) {
+        log("Listening\n");
+    }
     else
         server.error("ERROR on listen attempt");
 
@@ -83,7 +84,7 @@ int main() {
         if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
             server.error("ERROR Failed to create thread");
 
-        printf("Request count: %d\n", server.requestCounter);
+        log("Request count: %d\n", server.requestCounter);
 
         if (i >= 50) {
             i = 0;

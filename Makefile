@@ -5,4 +5,4 @@ main:
 	gcc $(SRC) -o bmb $(LIBS)
 
 dev:
-	gcc -fsanitize=undefined $(SRC) -o bmb $(LIBS)
+	gcc -D DEV -fsanitize=undefined $(SRC) -o bmb $(LIBS)

@@ -162,4 +162,4 @@ response payload: message
 ## Built With
 
 gcc - the GNU Compiler Collection, v7.4.0  
-[cJSON](https://github.com/DaveGamble/cJSON)
+[cJSON](https://github.com/DaveGamble/cJSON) - Ultralightweight JSON parser in ANSI C

@@ -133,7 +133,7 @@ Queue *queue_pool_get_by_name(QueuePool *this, const char *name)
  */
 void queue_pool_load(QueuePool *this)
 {
-    printf("Loading queue pool...\n");
+    log("Loading queue pool...\n");
     struct persist_request preq = {PERSIST_GET_QUEUE_LIST, NULL, 0, NULL};
     struct persist_response pres = persist_dispatch(preq);
     if (!pres.success) {
@@ -143,7 +143,7 @@ void queue_pool_load(QueuePool *this)
 
     void **queueList = pres.data;
     size_t numberOfQueues = *((size_t *) queueList[0]);
-    printf("Number of queues found: %ld\n", numberOfQueues);
+    log("Number of queues found: %ld\n", numberOfQueues);
     // Create queues.
     for (size_t i = 1; i <= numberOfQueues; i++) {
         char *queueName = (char *) queueList[i];
@@ -162,7 +162,7 @@ void queue_pool_load(QueuePool *this)
         queue->persist = false;
 
         // Create nodes.
-        printf("Number of nodes found: %d\n", queueNodes[0]);
+        log("Number of nodes found: %d\n", queueNodes[0]);
         for (size_t i = 1; i <= queueNodes[0]; i++) {
             struct persist_request pnreq = {PERSIST_READ_NODE, queueName, queueNodes[i], NULL};
             struct persist_response pnres = persist_dispatch(pnreq);
@@ -178,18 +178,18 @@ void queue_pool_load(QueuePool *this)
             _Queue.add(queue, newNode);
 
             mem_free(nodeContent);
-            printf("Loaded node: %d\n", queueNodes[i]);
+            log("Loaded node: %d\n", queueNodes[i]);
         }
 
         // Get and show next node id in currently loaded queue.
         struct persist_request pidreq = {PERSIST_GET_NEXT_ID, queueName, 0, NULL};
         struct persist_response pidres = persist_dispatch(pidreq);
-        printf("Next id will be: %d\n", *((unsigned int *) pidres.data));
+        log("Next id will be: %d\n", *((unsigned int *) pidres.data));
         mem_free(pidres.data);
 
         mem_free(queueNodes);
         queue->persist = true;
-        printf("====\n");
+        log("====\n");
 
     }
 
@@ -197,7 +197,7 @@ void queue_pool_load(QueuePool *this)
         mem_free(queueList[i]);
     }
     mem_free(queueList);
-    printf("Queue pool loaded.\n\n");
+    log("Queue pool loaded.\n\n");
 }
 
 /**

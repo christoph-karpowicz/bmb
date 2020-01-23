@@ -12,13 +12,13 @@
  */
 Request *Request_parse(const char *req) 
 {
-    printf("Parsing request... ");
+    log("Parsing request... ");
     Request *request    = (Request *) mem_alloc(sizeof(Request));
     request->method     = NULL;
     request->body       = RequestBody_new();
 
     char *method = Request_extract_method(req);
-    printf("extracted method: %s... ", method); 
+    log("extracted method: %s... ", method); 
 
     if (method == NULL)
     {
@@ -30,13 +30,13 @@ Request *Request_parse(const char *req)
 
     RequestPair *typePair = Request_extract_data(req, "type");
     if (typePair != NULL) {
-        printf("extracted type: %s\n", typePair->getValue(typePair));
+        log("extracted type: %s\n", typePair->getValue(typePair));
         request->body->add(request->body, typePair);
     }
 
     RequestPair *queuePair = Request_extract_data(req, "queue");
     if (queuePair != NULL) {
-        printf("extracted queue: %s\n", queuePair->getValue(queuePair));
+        log("extracted queue: %s\n", queuePair->getValue(queuePair));
         request->body->add(request->body, queuePair);
     }
 
@@ -44,7 +44,7 @@ Request *Request_parse(const char *req)
         
         RequestPair *dataPair = Request_extract_data(req, "data");
         if (dataPair != NULL) {
-            printf("extracted data: %s\n", dataPair->getValue(dataPair));
+            log("extracted data: %s\n", dataPair->getValue(dataPair));
             request->body->add(request->body, dataPair);
         }
 
@@ -54,7 +54,7 @@ Request *Request_parse(const char *req)
         RequestPair *indexPair = Request_extract_data(req, "index");
         if (indexPair != NULL)
         {
-            printf("extracted index: %s\n", indexPair->getValue(indexPair));
+            log("extracted index: %s\n", indexPair->getValue(indexPair));
             request->body->add(request->body, indexPair);
         }
 
@@ -112,12 +112,12 @@ static RequestPair *Request_extract_data(const char *request, const char *key)
         strncpy(data, &request[start], diff);
         data[diff] = '\0';
 
-        // printf("=======***** Diff: %d, data: %s\n", diff, data);
+        // log("=======***** Diff: %d, data: %s\n", diff, data);
         
     }
     else if (reti == REG_NOMATCH) {
         no_match = true;
-        printf("No match for %s.\n", key);
+        log("No match for %s.\n", key);
     }
     else {
         char msgbuf[100];
