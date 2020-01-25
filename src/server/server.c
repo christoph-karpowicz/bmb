@@ -1,7 +1,12 @@
 #include "server.h"
 
-Server *server_ptr = NULL;
+// Global server instance pointer initialization.
+Server *server = NULL;
 
+/**
+ * Server_error - print error to stderr and terminate the application.
+ * @msg: error message
+ */
 void Server_error(const char *msg)
 {
     perror(msg);
@@ -15,15 +20,14 @@ void Server_error(const char *msg)
  * RETURNS:
  * was the connected socket created successfully
  */
-bool Server_accept(Server *s) {
-    s->addr_size = sizeof s->serverStorage;
-    s->newSocket = accept(s->socket, (struct sockaddr *) &s->serverStorage, &s->addr_size);
-    if (s->newSocket < 0) {
-        s->error("ERROR on accept");
-        return false;
+int Server_accept(Server *s, Connection *conn) {
+    conn->addr_size = sizeof conn->addr;
+    int socketFd = accept(s->socket, (struct sockaddr *)&conn->addr, &conn->addr_size);
+    if (socketFd < 0) {
+        s->error("Error on accept");
     }
     ++s->requestCounter;
-    return true;
+    return socketFd;
 }
 
 /**
@@ -34,8 +38,8 @@ bool Server_accept(Server *s) {
  * was an address successfully bound to the socket
  */
 bool Server_bind(const Server *s) {
-    if (bind(s->socket, (struct sockaddr *) &s->serverAddr, sizeof(s->serverAddr)) < 0) {
-        s->error("ERROR on binding");
+    if (bind(s->socket, (struct sockaddr *)&s->serverAddr, sizeof(s->serverAddr)) < 0) {
+        s->error("Error on binding");
         return false;
     }
     return true;
@@ -54,10 +58,12 @@ bool Server_create_socket(Server *s) {
 
     s->socket = socket(PF_INET, SOCK_STREAM, 0);
     if (s->socket < 0) {
-        s->error("ERROR opening socket");
+        s->error("Error opening socket");
         return false;
     }
-    setsockopt(s->socket, SOL_SOCKET, SO_REUSEADDR, &s->socket, sizeof(int));
+    int optTrue = 1;
+    setsockopt(s->socket, SOL_SOCKET, SO_REUSEADDR, &optTrue, sizeof(int));
+    // setsockopt(s->socket, SOL_SOCKET, SO_DEBUG, &optTrue, sizeof(int));
     return true;
 
 }
@@ -97,5 +103,6 @@ void Server_init(Server *s) {
 }
 
 void Server_destruct(Server *s) {
-    mem_free(s->broker);    
+    mem_free(s->broker);
+    mem_free(s);
 }

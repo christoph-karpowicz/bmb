@@ -17,25 +17,26 @@
 #define BUFFER_SIZE 1024
 #define CLIENT_MESSAGE_SIZE 2000
 
-typedef struct Server {
-
+typedef struct {
     // Properties.
     int socket;
-    int newSocket;
     struct sockaddr_in serverAddr;
-    struct sockaddr_storage serverStorage;
-    socklen_t addr_size;
     Broker *broker;
     int requestCounter;
     
     // Methods.
     void (*error)(const char *msg);
-
 } Server;
 
-extern Server *server_ptr;
+typedef struct {
+    int socket_fd;
+    struct sockaddr addr;
+    socklen_t addr_size;
+} Connection;
 
-bool Server_accept(Server *s);
+extern Server *server;
+
+int Server_accept(Server *s, Connection *conn);
 
 bool Server_bind(const Server *s);
 
@@ -43,7 +44,8 @@ bool Server_create_socket(Server *s);
 
 void Server_init(Server *s);
 
-typedef struct socket_thread_arguments {
+typedef struct {
+    Connection *conn;
     Server *server;
     unsigned long long time_start;
 } socket_thread_args;

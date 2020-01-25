@@ -16,6 +16,6 @@
 
 extern pthread_mutex_t lock;
 
-void* socketThread(void *args);
+void* broker_thread(void *args);
 
 #endif

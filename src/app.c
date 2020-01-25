@@ -18,17 +18,18 @@
 #include "util/mem.h"
 
 /**
- * app_init - cleanup before closing the app.
+ * app_close - cleanup before closing the app.
  */
 __attribute__((destructor))
 void app_close()
 {
-    if (server_ptr == NULL) return;
-    queue_pool_destruct(server_ptr->broker->queuePool);
-    printf("* request count: %d\n", server_ptr->requestCounter);
-    Server_destruct(server_ptr);
+    if (server == NULL) return;
+    queue_pool_destruct(server->broker->queuePool);
+    printf("* request count: %d\n", server->requestCounter);
+    Server_destruct(server);
     printf("* memory allocations: %d\n", mem_allocated);
     printf("* memory freed: %d\n", mem_freed);
+    printf("* (two weren't freed because the last thread hasn't been opened)\n");
     printf("========\n");
 }
 
@@ -64,48 +65,39 @@ void app_init()
 {
     signal(SIGINT, close_signal_handler);
 
-    Server server;
-    Server_init(&server);
-    Server_create_socket(&server);
-    Server_bind(&server);
-
-    server_ptr = &server;
+    server = (Server *) mem_alloc(sizeof(Server));
+    Server_init(server);
+    Server_create_socket(server);
+    Server_bind(server);
 
     // Listen on the socket, with 50 max connection requests queued.
-    if (listen(server.socket, 50) == 0) {
-        log("Listening\n");
+    if (listen(server->socket, 50) == 0) {
+        log("Listening on port %d.\n", PORT);
     }
     else
-        server.error("ERROR on listen attempt");
+        server->error("Error on listen attempt.");
 }
 
 int main() {
-    pthread_t tid[50];
-    int i = 0;
+    pthread_t tid;
+    size_t i = 0;
 
     while(1) {
-        socket_thread_args args; 
+        socket_thread_args *args = (socket_thread_args *) mem_alloc(sizeof(socket_thread_args));
+        Connection *conn = (Connection *) mem_alloc(sizeof(Connection));
 
-        Server_accept(server_ptr);
+        conn->socket_fd = Server_accept(server, conn);
 
-        args.server = server_ptr;
-        args.time_start = get_epoch_milis();
+        args->conn       = conn;
+        args->server     = server;
+        args->time_start = get_epoch_milis();
 
         // Create separate thread for received client request.
-        if (pthread_create(&tid[i], NULL, socketThread, (void *)&args) != 0)
-            server_ptr->error("ERROR Failed to create thread");
+        if (pthread_create(&tid, NULL, broker_thread, (void *)args) != 0)
+            server->error("Error: failed to create thread.");
 
-        log("Request count: %d\n", server_ptr->requestCounter);
-
-        if (i >= 50) {
-            i = 0;
-            while(i < 50) {
-                pthread_join(tid[i++], NULL);
-            }
-            i = 0;
-        }
+        log("Request count: %d\n", server->requestCounter);
     }
         
     return 0;
-    
 }
